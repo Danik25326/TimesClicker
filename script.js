@@ -10,35 +10,34 @@ window.onload = function() {
   let score = 0;
   let musicStarted = false;
 
-  // === Запускаємо фонк тільки після першої взаємодії ===
+  // === ФУНКЦІЇ ===
   function startPhonk() {
     if (!musicStarted) {
-      phonk.volume = 0.3;
+      phonk.volume = 0.4;
       phonk.play().catch(() => {});
       musicStarted = true;
     }
   }
 
   function boomEffect() {
-    // короткий "бум" в бас
-    phonk.currentTime = 0;
-    phonk.play();
+    // короткий візуальний ефект
+    clock.style.scale = "1.05";
+    setTimeout(() => (clock.style.scale = "1"), 100);
   }
 
+  // === ВЗАЄМОДІЯ ===
   clock.addEventListener('click', () => {
-    startPhonk(); // запускаємо музику при першому кліку
+    startPhonk();
     score++;
     scoreText.textContent = `Часу зібрано: ${score} сек`;
 
-    // ефект блиску
     clock.style.borderColor = "#ec4899";
     clock.style.boxShadow = "0 0 50px #ec4899, 0 0 100px #ec4899";
-    
     boomEffect();
 
     setTimeout(() => {
       clock.style.borderColor = "#0ea5e9";
-      clock.style.boxShadow = 
+      clock.style.boxShadow =
         "0 0 30px #0ea5e9, 0 0 60px #0ea5e9, inset 0 0 30px rgba(14, 165, 233, 0.3)";
     }, 300);
   });
@@ -73,3 +72,4 @@ window.onload = function() {
   setInterval(updateClock, 1000);
   updateClock();
 };
+
