@@ -5,15 +5,52 @@ window.onload = function() {
   const secondHand = document.querySelector('.second');
   const clickBtn = document.getElementById('clickBtn');
   const scoreText = document.getElementById('score');
+  const phonk = document.getElementById('phonk'); // ФОНК
 
   let score = 0;
 
-  // Оновлення годинника
+  // === ГРА НА ФОНК ===
+  phonk.volume = 0.4; // не дуже гучно
+  phonk.play().catch(() => {}); // автозапуск (може блокуватися)
+
+  // Клік по годиннику — ФОНК БУМКАЄ
+  clock.addEventListener('click', () => {
+    score++;
+    scoreText.textContent = `Часу зібрано: ${score} сек`;
+
+    // Ефект зупинки
+    clock.style.borderColor = "#ec4899";
+    clock.style.boxShadow = "0 0 50px #ec4899, 0 0 100px #ec4899";
+    
+    // ФОНК — РЕВЕРБ
+    phonk.currentTime = 0;
+    phonk.play();
+
+    setTimeout(() => {
+      clock.style.borderColor = "#0ea5e9";
+      clock.style.boxShadow = 
+        "0 0 30px #0ea5e9, 0 0 60px #0ea5e9, inset 0 0 30px rgba(14, 165, 233, 0.3)";
+    }, 300);
+  });
+
+  // Кнопка — теж бум
+  clickBtn.addEventListener('click', () => {
+    score++;
+    scoreText.textContent = `Часу зібрано: ${score} сек`;
+    clickBtn.textContent = 'Час піймано!';
+    phonk.currentTime = 0;
+    phonk.play();
+    setTimeout(() => {
+      clickBtn.textContent = 'Клікни, щоб зупинити час!';
+    }, 800);
+  });
+
+  // === ГОДИННИК ===
   function updateClock() {
     const now = new Date();
     const seconds = now.getSeconds();
     const minutes = now.getMinutes();
-    const hours = now.getHours() % 12; // 12-годинний формат
+    const hours = now.getHours() % 12;
 
     const secDeg = seconds * 6;
     const minDeg = minutes * 6 + seconds * 0.1;
@@ -26,30 +63,4 @@ window.onload = function() {
 
   setInterval(updateClock, 1000);
   updateClock();
-
-  // Клік по годиннику
-  clock.addEventListener('click', () => {
-    score++;
-    scoreText.textContent = `Часу зібрано: ${score} сек`;
-
-    // Ефект "зупинки"
-    clock.style.borderColor = "#ec4899";
-    clock.style.boxShadow = "0 0 50px #ec4899, 0 0 100px #ec4899";
-    
-    setTimeout(() => {
-      clock.style.borderColor = "#0ea5e9";
-      clock.style.boxShadow = 
-        "0 0 30px #0ea5e9, 0 0 60px #0ea5e9, inset 0 0 30px rgba(14, 165, 233, 0.3)";
-    }, 300);
-  });
-
-  // Клік по кнопці (альтернатива)
-  clickBtn.addEventListener('click', () => {
-    score++;
-    scoreText.textContent = `Часу зібрано: ${score} сек`;
-    clickBtn.textContent = '✅ Час піймано!';
-    setTimeout(() => {
-      clickBtn.textContent = '⏰ Клікни, щоб зупинити час!';
-    }, 800);
-  });
 };
