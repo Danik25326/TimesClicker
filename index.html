@@ -28,5 +28,10 @@
   </audio>
 
   <script src="script.js"></script>
+  <script>
+document.getElementById('click-btn')?.addEventListener('click', () => {
+  new Audio('https://pixabay.com/music/upbeat-phonk-music-409064/.mp3').play().catch(()=>{});
+});
+</script>
 </body>
 </html>
