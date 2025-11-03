@@ -3,55 +3,23 @@ body {
   font-family: 'Poppins', sans-serif;
   background: radial-gradient(circle at center, #0b1220, #050810);
   color: white;
+  height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
-  overflow: hidden;
 }
 
 .container {
   display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  gap: 80px;
-}
-
-.left-panel {
-  display: flex;
-  flex-direction: column;
+  gap: 100px;
   align-items: center;
-  gap: 20px;
+  justify-content: center;
 }
 
-/* Кнопка кліку */
-#clickBtn {
-  background: linear-gradient(90deg, #0ea5e9, #3b82f6);
-  border: none;
-  color: white;
-  font-size: 18px;
-  padding: 12px 24px;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: 0.3s;
-}
-
-#clickBtn:hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 15px #3b82f6;
-}
-
-/* Текст рахунку */
-#score {
-  font-size: 20px;
-  text-shadow: 0 0 10px #3b82f6;
-}
-
-/* Контейнер апгрейдів (праворуч) */
+/* ===== ЛІВА ПАНЕЛЬ ===== */
 .upgrades-container {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
   gap: 14px;
   padding: 20px;
   background: rgba(15, 23, 42, 0.6);
@@ -84,4 +52,83 @@ body {
 .upgrade-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* ===== ПРАВА ПАНЕЛЬ ===== */
+.right-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+/* ГОДИННИК */
+.clock {
+  position: relative;
+  width: 250px;
+  height: 250px;
+  border: 6px solid #0ea5e9;
+  border-radius: 50%;
+  box-shadow: 0 0 30px #0ea5e9, 0 0 60px #0ea5e9, inset 0 0 30px rgba(14, 165, 233, 0.3);
+}
+
+.hand {
+  position: absolute;
+  bottom: 50%;
+  left: 50%;
+  transform-origin: bottom;
+  transform: translateX(-50%) rotate(0deg);
+  border-radius: 2px;
+}
+
+.hour {
+  width: 6px;
+  height: 50px;
+  background: #3b82f6;
+}
+
+.minute {
+  width: 4px;
+  height: 70px;
+  background: #60a5fa;
+}
+
+.second {
+  width: 2px;
+  height: 90px;
+  background: #ec4899;
+}
+
+.center-dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  background: #ec4899;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* КНОПКИ */
+#clickBtn, #musicBtn {
+  background: linear-gradient(90deg, #0ea5e9, #3b82f6);
+  border: none;
+  color: white;
+  font-size: 18px;
+  padding: 12px 24px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+#clickBtn:hover, #musicBtn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 15px #3b82f6;
+}
+
+/* ТЕКСТ */
+#score {
+  font-size: 20px;
+  text-shadow: 0 0 10px #3b82f6;
 }
