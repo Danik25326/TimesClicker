@@ -31,14 +31,16 @@
 <script>
   const clickBtn = document.getElementById('clickBtn');
   const phonk = document.getElementById('phonk');
-  let playing = false; // стан: грає чи ні
+  let playing = false; // чи грає зараз музика
 
   function togglePhonk() {
-    if (!playing) {
+    if (phonk.paused) {
+      phonk.currentTime = 0; // необов'язково, але перезапускає з початку
       phonk.volume = 0.4;
-      phonk.play().catch(() => {});
-      playing = true;
-      clickBtn.textContent = '⏸ Зупинити музику';
+      phonk.play().then(() => {
+        playing = true;
+        clickBtn.textContent = '⏸ Зупинити музику';
+      }).catch(err => console.log('Autoplay error:', err));
     } else {
       phonk.pause();
       playing = false;
@@ -46,7 +48,6 @@
     }
   }
 
-  // Перемикач на кнопку
   clickBtn.addEventListener('click', togglePhonk);
 </script>
 </body>
