@@ -11,7 +11,6 @@ window.onload = function() {
 
   let score = 0;
   let clickPower = 1;
-  let playing = false;
 
   // === АПГРЕЙДИ ===
   const upgrades = [
@@ -84,9 +83,11 @@ window.onload = function() {
       phonk.volume = 0.4;
       phonk.play();
       musicBtn.textContent = "⏸ Зупинити фонк";
+      musicBtn.classList.add("active");
     } else {
       phonk.pause();
       musicBtn.textContent = "▶️ Включити фонк";
+      musicBtn.classList.remove("active");
     }
   });
 
