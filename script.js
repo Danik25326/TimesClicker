@@ -12,6 +12,19 @@ window.onload = function() {
   let score = 0;
   let clickPower = 1;
 
+  // === ФОРМАТУВАННЯ ЧАСУ ===
+  function formatTime(seconds) {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = Math.floor(seconds % 60);
+
+    let parts = [];
+    if (h > 0) parts.push(`${h} год`);
+    if (m > 0) parts.push(`${m} хв`);
+    if (s > 0 || parts.length === 0) parts.push(`${s} сек`);
+    return parts.join(' ');
+  }
+
   // === АПГРЕЙДИ ===
   const upgrades = [
     { name: "📱 Включити телефон", baseCost: 10, bonus: 1, level: 0 },
@@ -25,6 +38,7 @@ window.onload = function() {
     { name: "🧠 Медитувати над сенсом часу", baseCost: 1000000000, bonus: 9, level: 0 },
   ];
 
+  // === СТВОРЕННЯ КНОПОК АПГРЕЙДІВ ===
   upgrades.forEach(upgrade => {
     const btn = document.createElement('button');
     btn.className = 'upgrade-btn';
@@ -43,22 +57,24 @@ window.onload = function() {
 
     function updateUpgradeText() {
       const cost = upgrade.baseCost + upgrade.level;
-      btn.textContent = `${upgrade.name} (Lv.${upgrade.level}) — ${cost.toLocaleString()} сек`;
+      btn.textContent = `${upgrade.name} (Lv.${upgrade.level}) — ${formatTime(cost)}`;
     }
 
     upgradesContainer.appendChild(btn);
   });
 
-  // === ОСНОВНА ЛОГІКА ===
+  // === ОНОВЛЕННЯ РАХУНКУ ===
   function updateScore() {
-    scoreText.textContent = `Часу зібрано: ${score.toLocaleString()} сек`;
+    scoreText.textContent = `Часу зібрано: ${formatTime(score)}`;
   }
 
+  // === ЕФЕКТ КЛІКУ ===
   function boomEffect() {
     clock.style.scale = "1.05";
     setTimeout(() => (clock.style.scale = "1"), 100);
   }
 
+  // === ДОДАВАННЯ ЧАСУ ===
   function addTime() {
     score += clickPower;
     updateScore();
@@ -77,7 +93,7 @@ window.onload = function() {
   clickBtn.addEventListener('click', addTime);
   clock.addEventListener('click', addTime);
 
-  // === Музика ===
+  // === МУЗИКА ===
   musicBtn.addEventListener('click', () => {
     if (phonk.paused) {
       phonk.volume = 0.4;
@@ -91,7 +107,7 @@ window.onload = function() {
     }
   });
 
-  // === ГОДИННИК ===
+  // === АНІМАЦІЯ ГОДИННИКА ===
   function updateClock() {
     const now = new Date();
     const seconds = now.getSeconds();
@@ -107,3 +123,5 @@ window.onload = function() {
   updateClock();
   updateScore();
 };
+
+
