@@ -13,14 +13,34 @@ window.onload = function() {
   let clickPower = 1;
 
   // === ФОРМАТУВАННЯ ЧАСУ ===
-  function formatTime(seconds) {
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    const s = Math.floor(seconds % 60);
-    // Завжди показує всі три одиниці
-    return `${h} год ${m} хв ${s} сек`;
+function formatTime(seconds) {
+  const units = [
+    { name: "століття", value: 60 * 60 * 24 * 365 * 100 },
+    { name: "десятиліття", value: 60 * 60 * 24 * 365 * 10 },
+    { name: "рік", value: 60 * 60 * 24 * 365 },
+    { name: "міс", value: 60 * 60 * 24 * 30 },
+    { name: "дн", value: 60 * 60 * 24 },
+    { name: "год", value: 60 * 60 },
+    { name: "хв", value: 60 },
+    { name: "сек", value: 1 }
+  ];
+
+  let remaining = seconds;
+  const parts = [];
+
+  for (const u of units) {
+    const amount = Math.floor(remaining / u.value);
+    if (amount > 0 || parts.length > 0) { 
+      // додаємо тільки якщо ця одиниця вже активна
+      if (amount > 0) parts.push(`${amount} ${u.name}`);
+      remaining %= u.value;
+    }
   }
 
+  // якщо менше 1 хвилини — показуємо лише секунди
+  if (parts.length === 0) return `${Math.floor(seconds)} сек`;
+  return parts.join(" ");
+}
   // === АПГРЕЙДИ ===
   const upgrades = [
     { name: "📱 Включити телефон", baseCost: 65, bonus: 1, level: 0 },
