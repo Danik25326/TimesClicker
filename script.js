@@ -6,7 +6,7 @@ window.onload = function() {
   const clickBtn = document.getElementById('clickBtn');
   const scoreText = document.getElementById('score');
 
-  let score = 0;
+  let totalSeconds = 0;
 
   // === Ефект при кліку ===
   function boomEffect() {
@@ -14,10 +14,45 @@ window.onload = function() {
     setTimeout(() => (clock.style.scale = "1"), 100);
   }
 
+  // === Форматування часу ===
+  function formatTime(totalSeconds) {
+    let seconds = totalSeconds;
+    let minutes = Math.floor(seconds / 60);
+    seconds %= 60;
+
+    let hours = Math.floor(minutes / 60);
+    minutes %= 60;
+
+    let days = Math.floor(hours / 24);
+    hours %= 24;
+
+    let months = Math.floor(days / 30);
+    days %= 30;
+
+    let years = Math.floor(months / 12);
+    months %= 12;
+
+    // Формуємо рядок для відображення
+    const parts = [];
+    if (years > 0) parts.push(`${years} рік${years > 1 ? 'и' : ''}`);
+    if (months > 0) parts.push(`${months} міс`);
+    if (days > 0) parts.push(`${days} дн`);
+    if (hours > 0) parts.push(`${hours} год`);
+    if (minutes > 0) parts.push(`${minutes} хв`);
+    if (seconds > 0 || parts.length === 0) parts.push(`${seconds} сек`);
+
+    return parts.join(' ');
+  }
+
+  // === Оновлення тексту рахунку ===
+  function updateScore() {
+    scoreText.textContent = `Часу зібрано: ${formatTime(totalSeconds)}`;
+  }
+
   // === Клік по годиннику ===
   clock.addEventListener('click', () => {
-    score++;
-    scoreText.textContent = `Часу зібрано: ${score} сек`;
+    totalSeconds++;
+    updateScore();
 
     clock.style.borderColor = "#ec4899";
     clock.style.boxShadow = "0 0 50px #ec4899, 0 0 100px #ec4899";
@@ -30,14 +65,14 @@ window.onload = function() {
     }, 300);
   });
 
-  // === Клік по кнопці (рахує, але не змінює текст — щоб не заважати музиці) ===
+  // === Клік по кнопці (рахує, але не заважає музиці) ===
   clickBtn.addEventListener('click', () => {
-    score++;
-    scoreText.textContent = `Часу зібрано: ${score} сек`;
+    totalSeconds++;
+    updateScore();
     boomEffect();
   });
 
-  // === Оновлення стрілок годинника ===
+  // === ГОДИННИК ===
   function updateClock() {
     const now = new Date();
     const seconds = now.getSeconds();
@@ -55,4 +90,7 @@ window.onload = function() {
 
   setInterval(updateClock, 1000);
   updateClock();
+
+  // Початковий текст
+  updateScore();
 };
