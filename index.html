@@ -11,44 +11,56 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⏰</text></svg>">
 </head>
 <body>
+  <div class="container">
+    <!-- ЛІВА ЧАСТИНА: годинник + кнопка + рахунок -->
+    <div class="left-panel">
+      <div class="clock" id="clickableClock">
+        <div class="hand hour"></div>
+        <div class="hand minute"></div>
+        <div class="hand second"></div>
+        <div class="center-dot"></div>
+      </div>
 
-  <div class="clock" id="clickableClock">
-    <div class="hand hour"></div>
-    <div class="hand minute"></div>
-    <div class="hand second"></div>
-    <div class="center-dot"></div>
+      <button id="clickBtn">Клікни, щоб зупинити час!</button>
+      <p id="score">Часу зібрано: 0 сек</p>
+
+      <!-- 🎧 КНОПКА МУЗИКИ -->
+      <button id="musicBtn">▶️ Включити фонк</button>
+    </div>
+
+    <!-- ПРАВА ЧАСТИНА: апгрейди -->
+    <div id="upgrades" class="upgrades-container"></div>
   </div>
 
-  <button id="clickBtn">Клікни, щоб зупинити час!</button>
-  <p id="score">Часу зібрано: 0 сек</p>
+  <!-- 🎧 ФОНК-МУЗИКА -->
+  <audio id="phonk" loop preload="auto">
+    <source src="https://raw.githubusercontent.com/Danik25326/timeclicker/main/phonk-music-409064.mp3" type="audio/mpeg">
+  </audio>
 
- <!-- 🎧 ФОНК ТУТ -->
-<audio id="phonk" loop preload="auto">
-  <source src="https://raw.githubusercontent.com/Danik25326/timeclicker/main/phonk-music-409064.mp3" type="audio/mpeg">
-</audio>
+  <script src="script.js"></script>
 
-<script src="script.js"></script>
-<script>
-  const clickBtn = document.getElementById('clickBtn');
-  const phonk = document.getElementById('phonk');
-  let playing = false; // чи грає зараз музика
+  <script>
+    // === МУЗИКА ===
+    const musicBtn = document.getElementById('musicBtn');
+    const phonk = document.getElementById('phonk');
+    let playing = false;
 
-  function togglePhonk() {
-    if (phonk.paused) {
-      phonk.currentTime = 0; // необов'язково, але перезапускає з початку
-      phonk.volume = 0.4;
-      phonk.play().then(() => {
-        playing = true;
-        clickBtn.textContent = '⏸ Зупинити музику';
-      }).catch(err => console.log('Autoplay error:', err));
-    } else {
-      phonk.pause();
-      playing = false;
-      clickBtn.textContent = '▶️ Включити фонк';
+    function togglePhonk() {
+      if (phonk.paused) {
+        phonk.currentTime = 0;
+        phonk.volume = 0.4;
+        phonk.play().then(() => {
+          playing = true;
+          musicBtn.textContent = '⏸ Зупинити фонк';
+        }).catch(err => console.log('Autoplay error:', err));
+      } else {
+        phonk.pause();
+        playing = false;
+        musicBtn.textContent = '▶️ Включити фонк';
+      }
     }
-  }
 
-  clickBtn.addEventListener('click', togglePhonk);
-</script>
+    musicBtn.addEventListener('click', togglePhonk);
+  </script>
 </body>
 </html>
