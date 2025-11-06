@@ -9,10 +9,10 @@ window.onload = function() {
   const scoreText = document.getElementById('score');
   const upgradesContainer = document.getElementById('upgrades');
 
-  let score = 0;
-  let clickPower = 1;
+  let score = parseFloat(localStorage.getItem('score')) || 0;
+  let clickPower = parseFloat(localStorage.getItem('clickPower')) || 1;
+  let autoGain = parseFloat(localStorage.getItem('autoGain')) || 0;
 
-  // === ФОРМАТУВАННЯ ЧАСУ ===
   function formatTime(seconds) {
     const units = [
       { name: "століття", value: 60 * 60 * 24 * 365 * 100 },
@@ -38,7 +38,6 @@ window.onload = function() {
     return parts.join(" ");
   }
 
-  // === АПГРЕЙДИ ===
   const upgrades = [
     { name: "📱 Включити телефон", baseCost: 10, bonus: 1, level: 0 },
     { name: "☕ Зробити каву", baseCost: 60, bonus: 2, level: 0 },
@@ -48,7 +47,7 @@ window.onload = function() {
     { name: "📚 Відкрити книгу", baseCost: 1000000, bonus: 6, level: 0 },
     { name: "🌇 Вийти на прогулянку", baseCost: 10000000, bonus: 7, level: 0 },
     { name: "🚀 Почати проєкт", baseCost: 100000000, bonus: 8, level: 0 },
-    { name: "🧠 Медитувати над сенсом часу", baseCost: 1000000000, bonus: 9, level: 0 },
+    { name: "🧠 Медитувати над сенсом часу", baseCost: 1000000000, bonus: 9, level: 0 }
   ];
 
   upgrades.forEach((upgrade, index) => {
@@ -57,25 +56,27 @@ window.onload = function() {
     updateUpgradeText();
 
     btn.addEventListener('click', () => {
-      const cost = upgrade.baseCost + upgrade.level;
+      const cost = upgrade.baseCost * (upgrade.level + 1);
       if (score >= cost) {
         score -= cost;
         upgrade.level++;
         clickPower += upgrade.bonus;
+        if (index % 2 === 0) autoGain += upgrade.bonus * 0.2;
         updateUpgradeText();
         updateScore();
         revealNextUpgrade(index);
+        saveProgress();
       }
     });
 
     function updateUpgradeText() {
-      const cost = upgrade.baseCost + upgrade.level;
-
-      // логіка загадковості
+      const cost = upgrade.baseCost * (upgrade.level + 1);
       if (index < 3) {
         btn.textContent = `${upgrade.name} (Lv.${upgrade.level}) — ${formatTime(cost)}`;
+        btn.disabled = false;
       } else if (index === 3) {
         btn.textContent = `❓ ??? — ${formatTime(cost)}`;
+        btn.disabled = false;
       } else {
         btn.textContent = `🔒 Недоступно`;
         btn.disabled = true;
@@ -106,6 +107,7 @@ window.onload = function() {
   function addTime() {
     score += clickPower;
     updateScore();
+    saveProgress();
 
     clock.style.borderColor = "#ec4899";
     clock.style.boxShadow = "0 0 50px #ec4899, 0 0 100px #ec4899";
@@ -113,10 +115,21 @@ window.onload = function() {
 
     setTimeout(() => {
       clock.style.borderColor = "#0ea5e9";
-      clock.style.boxShadow =
-        "0 0 30px #0ea5e9, 0 0 60px #0ea5e9, inset 0 0 30px rgba(14, 165, 233, 0.3)";
+      clock.style.boxShadow = "0 0 30px #0ea5e9, 0 0 60px #0ea5e9, inset 0 0 30px rgba(14, 165, 233, 0.3)";
     }, 300);
   }
+
+  function saveProgress() {
+    localStorage.setItem('score', score);
+    localStorage.setItem('clickPower', clickPower);
+    localStorage.setItem('autoGain', autoGain);
+  }
+
+  setInterval(() => {
+    score += autoGain;
+    updateScore();
+    saveProgress();
+  }, 1000);
 
   clickBtn.addEventListener('click', addTime);
   clock.addEventListener('click', addTime);
