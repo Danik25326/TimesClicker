@@ -1,164 +1,144 @@
-window.onload = function() {
-  const clock = document.getElementById('clickableClock');
-  const hourHand = document.querySelector('.hour');
-  const minuteHand = document.querySelector('.minute');
-  const secondHand = document.querySelector('.second');
-  const clickBtn = document.getElementById('clickBtn');
-  const musicBtn = document.getElementById('musicBtn');
-  const phonk = document.getElementById('phonk');
-  const scoreText = document.getElementById('score');
-  const upgradesContainer = document.getElementById('upgrades');
+### script.js
 
-  let score = parseFloat(localStorage.getItem('score')) || 0;
-  let clickPower = parseFloat(localStorage.getItem('clickPower')) || 1;
-  let autoGain = parseFloat(localStorage.getItem('autoGain')) || 0;
+```javascript
+const clickBtn = document.getElementById('clickBtn');
+const scoreDisplay = document.getElementById('score');
+const upgradesContainer = document.getElementById('upgrades');
+const clock = document.getElementById('clickableClock');
+const musicBtn = document.getElementById('musicBtn');
+const phonk = document.getElementById('phonk');
+const musicPrev = document.getElementById('musicPrev');
+const musicNext = document.getElementById('musicNext');
 
-  function formatTime(seconds) {
-    const units = [
-      { name: "століття", value: 60 * 60 * 24 * 365 * 100 },
-      { name: "десятиліття", value: 60 * 60 * 24 * 365 * 10 },
-      { name: "рік", value: 60 * 60 * 24 * 365 },
-      { name: "міс", value: 60 * 60 * 24 * 30 },
-      { name: "дн", value: 60 * 60 * 24 },
-      { name: "год", value: 60 * 60 },
-      { name: "хв", value: 60 },
-      { name: "сек", value: 1 }
-    ];
+let score = 0;
+let perClick = 1;
+let autoGain = 0;
+let autoGainInterval;
+let musicIndex = 0;
 
-    let remaining = seconds;
-    const parts = [];
-    for (const u of units) {
-      const amount = Math.floor(remaining / u.value);
-      if (amount > 0 || parts.length > 0) {
-        if (amount > 0) parts.push(`${amount} ${u.name}`);
-        remaining %= u.value;
-      }
-    }
-    if (parts.length === 0) return `${Math.floor(seconds)} сек`;
-    return parts.join(" ");
+// ======== MUSIC CONTROL ========
+function loadMusic(index) {
+  if (!musicList[index]) return;
+  phonk.src = musicList[index].url;
+  phonk.load();
+}
+
+musicBtn.addEventListener('click', () => {
+  if (phonk.paused) {
+    phonk.play();
+    musicBtn.textContent = '⏸️ Зупинити фонк';
+  } else {
+    phonk.pause();
+    musicBtn.textContent = '▶️ Включити фонк';
   }
+});
 
-  const upgrades = [
-    { name: "📱 Включити телефон", baseCost: 10, bonus: 1, level: 0 },
-    { name: "☕ Зробити каву", baseCost: 60, bonus: 2, level: 0 },
-    { name: "💻 Увімкнути ноут", baseCost: 120, bonus: 3, level: 0 },
-    { name: "🎧 Надіти навушники", baseCost: 1000, bonus: 4, level: 0 },
-    { name: "💪 Почати тренування", baseCost: 10000, bonus: 5, level: 0 },
-    { name: "📚 Відкрити книгу", baseCost: 1000000, bonus: 6, level: 0 },
-    { name: "🌇 Вийти на прогулянку", baseCost: 10000000, bonus: 7, level: 0 },
-    { name: "🚀 Почати проєкт", baseCost: 100000000, bonus: 8, level: 0 },
-    { name: "🧠 Медитувати над сенсом часу", baseCost: 1000000000, bonus: 9, level: 0 }
-  ];
+musicPrev.addEventListener('click', () => {
+  musicIndex = (musicIndex - 1 + musicList.length) % musicList.length;
+  loadMusic(musicIndex);
+  phonk.play();
+});
 
-  upgrades.forEach((upgrade, index) => {
-    const btn = document.createElement('button');
-    btn.className = 'upgrade-btn';
-    updateUpgradeText();
+musicNext.addEventListener('click', () => {
+  musicIndex = (musicIndex + 1) % musicList.length;
+  loadMusic(musicIndex);
+  phonk.play();
+});
 
-    btn.addEventListener('click', () => {
-      const cost = upgrade.baseCost * (upgrade.level + 1);
-      if (score >= cost) {
-        score -= cost;
-        upgrade.level++;
-        clickPower += upgrade.bonus;
-        if (index % 2 === 0) autoGain += upgrade.bonus * 0.2;
-        updateUpgradeText();
-        updateScore();
-        revealNextUpgrade(index);
-        saveProgress();
-      }
-    });
+loadMusic(musicIndex);
 
-    function updateUpgradeText() {
-      const cost = upgrade.baseCost * (upgrade.level + 1);
-      if (index < 3) {
-        btn.textContent = `${upgrade.name} (Lv.${upgrade.level}) — ${formatTime(cost)}`;
-        btn.disabled = false;
-      } else if (index === 3) {
-        btn.textContent = `❓ ??? — ${formatTime(cost)}`;
-        btn.disabled = false;
-      } else {
-        btn.textContent = `🔒 Недоступно`;
-        btn.disabled = true;
-      }
-    }
-
-    upgradesContainer.appendChild(btn);
-  });
-
-  function revealNextUpgrade(currentIndex) {
-    const next = upgradesContainer.children[currentIndex + 1];
-    if (next && next.disabled) {
-      next.disabled = false;
-      next.textContent = `❓ ??? — ${formatTime(upgrades[currentIndex + 1].baseCost)}`;
-      next.classList.add('mystery');
-    }
-  }
-
-  function updateScore() {
-    scoreText.textContent = `Часу зібрано: ${formatTime(score)}`;
-  }
-
-  function boomEffect() {
-    clock.style.scale = "1.05";
-    setTimeout(() => (clock.style.scale = "1"), 100);
-  }
-
-  function addTime() {
-    score += clickPower;
-    updateScore();
-    saveProgress();
-
-    clock.style.borderColor = "#ec4899";
-    clock.style.boxShadow = "0 0 50px #ec4899, 0 0 100px #ec4899";
-    boomEffect();
-
-    setTimeout(() => {
-      clock.style.borderColor = "#0ea5e9";
-      clock.style.boxShadow = "0 0 30px #0ea5e9, 0 0 60px #0ea5e9, inset 0 0 30px rgba(14, 165, 233, 0.3)";
-    }, 300);
-  }
-
-  function saveProgress() {
-    localStorage.setItem('score', score);
-    localStorage.setItem('clickPower', clickPower);
-    localStorage.setItem('autoGain', autoGain);
-  }
-
-  setInterval(() => {
-    score += autoGain;
-    updateScore();
-    saveProgress();
-  }, 1000);
-
-  clickBtn.addEventListener('click', addTime);
-  clock.addEventListener('click', addTime);
-
-  musicBtn.addEventListener('click', () => {
-    if (phonk.paused) {
-      phonk.volume = 0.4;
-      phonk.play();
-      musicBtn.textContent = "⏸ Зупинити фонк";
-      musicBtn.classList.add("active");
-    } else {
-      phonk.pause();
-      musicBtn.textContent = "▶️ Включити фонк";
-      musicBtn.classList.remove("active");
-    }
-  });
-
-  function updateClock() {
-    const now = new Date();
-    const seconds = now.getSeconds();
-    const minutes = now.getMinutes();
-    const hours = now.getHours() % 12;
-
-    secondHand.style.transform = `translateX(-50%) rotate(${seconds * 6}deg)`;
-    minuteHand.style.transform = `translateX(-50%) rotate(${minutes * 6 + seconds * 0.1}deg)`;
-    hourHand.style.transform = `translateX(-50%) rotate(${hours * 30 + minutes * 0.5}deg)`;
-  }
-
-  setInterval(updateClock, 1000);
-  updateClock();
+// ======== GAME CORE ========
+clickBtn.addEventListener('click', () => {
+  score += perClick;
   updateScore();
-};
+  animateClock();
+});
+
+function updateScore() {
+  scoreDisplay.textContent = `Часу зібрано: ${score} сек`;
+  checkUpgrades();
+}
+
+function animateClock() {
+  clock.style.transform = 'scale(1.1)';
+  setTimeout(() => (clock.style.transform = 'scale(1)'), 100);
+}
+
+// ======== AUTO GAIN ========
+function startAutoGain() {
+  clearInterval(autoGainInterval);
+  if (autoGain > 0) {
+    autoGainInterval = setInterval(() => {
+      score += autoGain;
+      updateScore();
+      glowPulse();
+    }, 1000);
+  }
+}
+
+function glowPulse() {
+  clock.classList.add('glow');
+  setTimeout(() => clock.classList.remove('glow'), 300);
+}
+
+// ======== UPGRADES ========
+const upgrades = [
+  { name: '⏰ +1 за клік', cost: 10, bonus: 1, type: 'click' },
+  { name: '⚙️ +5 автогенерації', cost: 100, bonus: 5, type: 'auto' },
+  { name: '💎 +10 за клік', cost: 500, bonus: 10, type: 'click' },
+  { name: '🪐 +20 автогенерації', cost: 2000, bonus: 20, type: 'auto' },
+  { name: '💥 +100 за клік', cost: 10000, bonus: 100, type: 'click' }
+];
+
+function renderUpgrades() {
+  upgradesContainer.innerHTML = '';
+  upgrades.forEach((upg, i) => {
+    const btn = document.createElement('button');
+    btn.textContent = `${upg.name} — ${upg.cost} сек`;
+    btn.className = 'upgrade-btn locked';
+    btn.disabled = true;
+    btn.addEventListener('click', () => buyUpgrade(i, btn));
+    upgradesContainer.appendChild(btn);
+    upg.button = btn;
+  });
+}
+
+function checkUpgrades() {
+  upgrades.forEach((upg) => {
+    if (score >= upg.cost && upg.button.disabled) {
+      upg.button.disabled = false;
+      upg.button.classList.remove('locked');
+    }
+  });
+}
+
+function buyUpgrade(index, button) {
+  const upg = upgrades[index];
+  if (score >= upg.cost) {
+    score -= upg.cost;
+    if (upg.type === 'click') perClick += upg.bonus;
+    else if (upg.type === 'auto') {
+      autoGain += upg.bonus;
+      startAutoGain();
+    }
+    upg.cost = Math.floor(upg.cost * 2.5);
+    button.textContent = `${upg.name} — ${upg.cost} сек`;
+    button.disabled = true;
+    button.classList.add('locked');
+    updateScore();
+  }
+}
+
+renderUpgrades();
+updateScore();
+startAutoGain();
+```
+
+### musicList.js
+
+```javascript
+const musicList = [
+  { title: 'Phonk 1', url: 'https://cdn.pixabay.com/download/audio/2022/03/15/audio_3bfcdb8a69.mp3' },
+  { title: 'Phonk 2', url: 'https://cdn.pixabay.com/download/audio/2023/02/20/audio_2b84e7f5a3.mp3' },
+  { title: 'Phonk 3', url: 'https:
+```
