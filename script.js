@@ -1,95 +1,57 @@
-window.onload = function() {
-  // ===== Основні елементи =====
-  const clock = document.getElementById('clickableClock');
-  const hourHand = document.querySelector('.hour');
-  const minuteHand = document.querySelector('.minute');
-  const secondHand = document.querySelector('.second');
-  const clickBtn = document.getElementById('clickBtn');
-  const musicBtn = document.getElementById('musicBtn');
-  const phonk = document.getElementById('phonk');
-  const scoreText = document.getElementById('score');
-  const upgradesContainer = document.getElementById('upgrades');
+window.onload = function () {
+  const clock = document.getElementById("clock");
+  const ctx = clock.getContext("2d");
+  const scoreDisplay = document.getElementById("score");
+  const upgradesContainer = document.getElementById("upgrades");
+  const phonk = document.getElementById("phonk");
+  const musicToggle = document.getElementById("musicToggle");
+  const prevBtn = document.getElementById("musicPrev");
+  const nextBtn = document.getElementById("musicNext");
 
-  // ===== Ігрові змінні =====
-  let score = parseFloat(localStorage.getItem('score')) || 0;
-  let clickPower = parseFloat(localStorage.getItem('clickPower')) || 1;
-  let autoGain = parseFloat(localStorage.getItem('autoGain')) || 0;
-  let gameTimeOffset = 0; // бонусний час від кліків
+  let score = 0;
+  let clickPower = 1;
+  let autoGain = 0;
+  let isMusicPlaying = false;
+  let currentTrack = 0;
 
-  // ===== Збереження прогресу =====
-  function saveProgress() {
-    localStorage.setItem('score', score);
-    localStorage.setItem('clickPower', clickPower);
-    localStorage.setItem('autoGain', autoGain);
-  }
-
-  // ===== Форматування часу =====
-  function formatTime(totalSeconds) {
-    if (totalSeconds < 60) return `${totalSeconds} сек`;
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds % 60;
-    return `${minutes} хв ${seconds} сек`;
-  }
-
-  // ===== Синхронізований годинник =====
-  function updateClock() {
+  // --- Годинник ---
+  function drawClock() {
+    ctx.clearRect(0, 0, 200, 200);
     const now = new Date();
-    const virtualTime = new Date(now.getTime() + gameTimeOffset * 1000);
+    ctx.save();
+    ctx.translate(100, 100);
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(0, 0, 90, 0, Math.PI * 2);
+    ctx.stroke();
 
-    const ms = virtualTime.getMilliseconds();
-    const sec = virtualTime.getSeconds() + ms / 1000;
-    const min = virtualTime.getMinutes() + sec / 60;
-    const hour = (virtualTime.getHours() % 12) + min / 60;
+    const sec = now.getSeconds();
+    const min = now.getMinutes();
+    const hr = now.getHours();
 
-    const secondsDeg = sec * 6;   // 360/60
-    const minutesDeg = min * 6;
-    const hoursDeg = hour * 30;   // 360/12
+    drawHand((hr % 12) / 12 * 2 * Math.PI, 50, 5);
+    drawHand((min / 60) * 2 * Math.PI, 70, 3);
+    drawHand((sec / 60) * 2 * Math.PI, 85, 2, "red");
+    ctx.restore();
 
-    secondHand.style.transform = `translateX(-50%) rotate(${secondsDeg}deg)`;
-    minuteHand.style.transform = `translateX(-50%) rotate(${minutesDeg}deg)`;
-    hourHand.style.transform = `translateX(-50%) rotate(${hoursDeg}deg)`;
-
-    requestAnimationFrame(updateClock);
+    requestAnimationFrame(drawClock);
   }
-  requestAnimationFrame(updateClock);
 
-  // ===== Клік по годиннику =====
+  function drawHand(angle, length, width, color = "#fff") {
+    ctx.save();
+    ctx.rotate(angle - Math.PI / 2);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(length, 0);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  requestAnimationFrame(drawClock);
+
+  // --- Клік ---
   clock.addEventListener("click", () => {
-    score += clickPower;
-    gameTimeOffset += clickPower; // додаємо "прискорений" час
-    scoreText.textContent = `Часу зібрано: ${formatTime(Math.floor(score))}`;
-    saveProgress();
-    clockClickAnimation();
-  });
-
-  // ===== Автогенерація =====
-  setInterval(() => {
-    if (autoGain > 0) {
-      score += autoGain;
-      scoreText.textContent = `Часу зібрано: ${formatTime(Math.floor(score))}`;
-      saveProgress();
-    }
-  }, 1000);
-
-  // ===== Візуальна анімація кліку =====
-  function clockClickAnimation() {
     clock.classList.add("clicked");
-    setTimeout(() => clock.classList.remove("clicked"), 150);
-  }
-
-  // ===== Кнопка "Зупинити фонк" =====
-  let musicPlaying = false;
-  musicBtn.addEventListener("click", () => {
-    if (!musicPlaying) {
-      phonk.play();
-      musicBtn.textContent = "⏸ Зупинити фонк";
-    } else {
-      phonk.pause();
-      musicBtn.textContent = "▶ Включити фонк";
-    }
-    musicPlaying = !musicPlaying;
-  });
-
-  // ===== Ініціалізація =====
-  scoreText.textContent = `Часу зібрано: ${formatTime(Math.floor(score))}`;
-};
