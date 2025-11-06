@@ -1,51 +1,27 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>TimesClicker ⏰</title>
-
-  <!-- Шрифт -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-
-  <!-- CSS -->
-  <link rel="stylesheet" href="style.css?v=1">
-
-  <!-- Іконка -->
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⏰</text></svg>">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TimesClicker</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container">
-    <!-- Ліва панель: апгрейди -->
-    <div class="upgrades-container" id="upgrades"></div>
+  <h1>🕒 TimesClicker</h1>
 
-    <!-- Права панель: годинник + кнопки -->
-    <div class="right-panel">
-      <div class="clock-wrapper">
-        <div class="clock" id="clickableClock">
-          <div class="hand hour"></div>
-          <div class="hand minute"></div>
-          <div class="hand second"></div>
-          <div class="center-dot"></div>
-        </div>
-      </div>
-
-      <button id="clickBtn" class="main-btn">Клікни, щоб зупинити час!</button>
-      <p id="score">Часу зібрано: 0 сек</p>
-
-      <div class="phonk-wrapper">
-        <button id="musicPrev" class="phonk-small">⏮️</button>
-        <button id="musicBtn" class="phonk-btn">▶️ Включити фонк</button>
-        <button id="musicNext" class="phonk-small">⏭️</button>
-      </div>
-
-      <p id="trackTitle" class="track-title">Phonk: не вибрано</p>
-
-      <audio id="phonk" loop preload="auto"></audio>
-    </div>
+  <div id="clockContainer">
+    <canvas id="clock" width="200" height="200"></canvas>
   </div>
 
-  <!-- Порядок важливий: перш за все список треків, потім логіка -->
+  <div id="score">Час: 0 сек</div>
+
+  <div id="upgrades"></div>
+
+  <button id="musicToggle">🎵</button>
+  <button id="musicPrev">⏮️</button>
+  <button id="musicNext">⏭️</button>
+  <audio id="phonk" loop preload="auto"></audio>
+
   <script src="musicList.js"></script>
   <script src="script.js"></script>
 </body>
