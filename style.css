@@ -9,6 +9,23 @@ body {
   justify-content: center;
   align-items: center;
 }
+.title-box {
+  position: absolute;
+  top: 20px;
+  font-size: 32px;
+  font-weight: 700;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+#editNameBtn {
+  font-size: 20px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: none;
+}
 
 .container {
   display: flex;
