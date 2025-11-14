@@ -3,14 +3,24 @@ window.onload = function () {
   const hourHand = document.querySelector(".hour");
   const minuteHand = document.querySelector(".minute");
   const secondHand = document.querySelector(".second");
-  const clickBtn = document.getElementById("clickBtn");
   const musicBtn = document.getElementById("musicBtn");
   const phonk = document.getElementById("phonk");
   const scoreText = document.getElementById("score");
   const upgradesContainer = document.getElementById("upgrades");
 
+  const editNameBtn = document.getElementById("editNameBtn");
+  const worldNameSpan = document.getElementById("worldName");
+
   let score = 0;
   let clickPower = 1;
+
+  // ❤️ ЗМІНА НАЗВИ (Earth Time → custom Time)
+  editNameBtn.addEventListener("click", () => {
+    let newName = prompt("Введи нову назву (тільки перше слово):");
+    if (!newName) return;
+    newName = newName.trim().split(" ")[0];
+    worldNameSpan.textContent = newName;
+  });
 
   function formatTime(seconds) {
     const units = [
@@ -39,81 +49,56 @@ window.onload = function () {
     return parts.join(" ");
   }
 
+  // 🔥 ЗМЕНШЕНІ ЦІНИ ×5
   const upgrades = [
-    { name: "📱 Включити телефон", baseCost: 65, bonus: 1, level: 0 },
-    { name: "☕ Зробити каву", baseCost: 125, bonus: 2, level: 0 },
-    { name: "💻 Увімкнути ноут", baseCost: 3605, bonus: 3, level: 0 },
-    { name: "🎧 Надіти навушники", baseCost: 10000, bonus: 4, level: 0 },
-    { name: "💪 Почати тренування", baseCost: 100000, bonus: 5, level: 0 },
-    { name: "📚 Відкрити книгу", baseCost: 1000000, bonus: 6, level: 0 },
-    { name: "🌇 Вийти на прогулянку", baseCost: 10000000, bonus: 7, level: 0 },
-    { name: "🚀 Почати проєкт", baseCost: 100000000, bonus: 8, level: 0 },
-    { name: "🧠 Медитувати над сенсом часу", baseCost: 1000000000, bonus: 9, level: 0 },
+    { name: "📱 Включити телефон", baseCost: 12, bonus: 1, level: 0 },
+    { name: "☕ Зробити каву", baseCost: 25, bonus: 2, level: 0 },
+    { name: "💻 Увімкнути ноут", baseCost: 700, bonus: 3, level: 0 },
+    { name: "🎧 Надіти навушники", baseCost: 2000, bonus: 4, level: 0 },
+    { name: "💪 Почати тренування", baseCost: 20000, bonus: 5, level: 0 },
+    { name: "📚 Відкрити книгу", baseCost: 200000, bonus: 6, level: 0 },
+    { name: "🌇 Вийти на прогулянку", baseCost: 2000000, bonus: 7, level: 0 },
+    { name: "🚀 Почати проєкт", baseCost: 20000000, bonus: 8, level: 0 },
+    { name: "🧠 Медитувати над сенсом часу", baseCost: 200000000, bonus: 9, level: 0 },
   ];
 
   const buttons = [];
 
-  upgrades.forEach((upgrade, i) => {
+  upgrades.forEach((upgrade, index) => {
     const btn = document.createElement("button");
     btn.className = "upgrade-btn hidden";
-    buttons.push(btn);
     upgradesContainer.appendChild(btn);
+    buttons.push(btn);
 
     function updateText() {
-      const cost = upgrade.baseCost + upgrade.level;
-      if (btn.dataset.locked === "true") {
-        btn.textContent = "🔒 ??? — ???";
-      } else {
-        btn.textContent = `${upgrade.name} (Lv.${upgrade.level}) — ${formatTime(cost)}`;
-      }
+      const cost = upgrade.baseCost * (upgrade.level + 1);
+      btn.textContent = `${upgrade.name} (Lv.${upgrade.level}) — ${formatTime(cost)}`;
     }
 
-    btn.dataset.locked = "false";
     updateText();
 
     btn.addEventListener("click", () => {
-      const cost = upgrade.baseCost + upgrade.level;
-      if (score >= cost && btn.dataset.locked !== "true") {
+      const cost = upgrade.baseCost * (upgrade.level + 1);
+      if (score >= cost) {
         score -= cost;
         upgrade.level++;
         clickPower += upgrade.bonus;
-        updateScore();
         updateText();
-        revealNextUpgrade(i);
+        updateScore();
+        revealNext(index);
       }
     });
 
     upgrade.update = updateText;
   });
 
-  // Показати перші 3 апгрейди
-  for (let i = 0; i < 3; i++) buttons[i].classList.remove("hidden");
+  // показуємо перший апгрейд
+  buttons[0].classList.remove("hidden");
 
-  // Наступні 2 з замочками
-  if (buttons[3]) {
-    buttons[3].classList.remove("hidden");
-    buttons[3].dataset.locked = "true";
-    buttons[3].textContent = "🔒 ??? — ???";
-  }
-
-  if (buttons[4]) {
-    buttons[4].classList.remove("hidden");
-    buttons[4].dataset.locked = "true";
-    buttons[4].textContent = "🔒 ??? — ???";
-  }
-
-  function revealNextUpgrade(index) {
-    // логіка відкриття наступних апгрейдів
-    const nextMap = { 0: 3, 1: 4, 2: 5, 3: 6, 4: 7, 5: 8 };
-    const nextIndex = nextMap[index];
-    if (nextIndex !== undefined) revealWithLock(nextIndex);
-  }
-
-  function revealWithLock(index) {
-    if (buttons[index]) {
-      buttons[index].classList.remove("hidden");
-      buttons[index].dataset.locked = "true";
-      buttons[index].textContent = "🔒 ??? — ???";
+  // відкриття наступного апгрейду після покупки попереднього
+  function revealNext(i) {
+    if (buttons[i + 1]) {
+      buttons[i + 1].classList.remove("hidden");
     }
   }
 
@@ -123,25 +108,16 @@ window.onload = function () {
 
   function boomEffect() {
     clock.style.scale = "1.05";
-    setTimeout(() => {
-      clock.style.scale = "1";
-    }, 100);
+    setTimeout(() => (clock.style.scale = "1"), 120);
   }
 
   function addTime() {
     score += clickPower;
     updateScore();
-    clock.style.borderColor = "#ec4899";
-    clock.style.boxShadow = "0 0 50px #ec4899, 0 0 100px #ec4899";
     boomEffect();
-    setTimeout(() => {
-      clock.style.borderColor = "#0ea5e9";
-      clock.style.boxShadow =
-        "0 0 30px #0ea5e9, 0 0 60px #0ea5e9, inset 0 0 30px rgba(14,165,233,0.3)";
-    }, 300);
   }
 
-  clickBtn.addEventListener("click", addTime);
+  // Клік тільки по годиннику
   clock.addEventListener("click", addTime);
 
   musicBtn.addEventListener("click", () => {
@@ -149,11 +125,9 @@ window.onload = function () {
       phonk.volume = 0.4;
       phonk.play();
       musicBtn.textContent = "⏸ Зупинити фонк";
-      musicBtn.classList.add("active");
     } else {
       phonk.pause();
       musicBtn.textContent = "▶️ Включити фонк";
-      musicBtn.classList.remove("active");
     }
   });
 
@@ -164,12 +138,8 @@ window.onload = function () {
     const hours = now.getHours() % 12;
 
     secondHand.style.transform = `translateX(-50%) rotate(${seconds * 6}deg)`;
-    minuteHand.style.transform = `translateX(-50%) rotate(${
-      minutes * 6 + seconds * 0.1
-    }deg)`;
-    hourHand.style.transform = `translateX(-50%) rotate(${
-      hours * 30 + minutes * 0.5
-    }deg)`;
+    minuteHand.style.transform = `translateX(-50%) rotate(${minutes * 6 + seconds * 0.1}deg)`;
+    hourHand.style.transform = `translateX(-50%) rotate(${hours * 30 + minutes * 0.5}deg)`;
   }
 
   setInterval(updateClock, 1000);
