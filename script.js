@@ -119,14 +119,11 @@ window.onload = function () {
   // Ефект кліку
   // --------------------------
 function boomEffect() {
-  // Анімація масштабу
-  clock.classList.add("clicked");
-  clock.style.scale = "1.05";
+    clock.classList.add("click-anim");
 
-  setTimeout(() => {
-    clock.style.scale = "1";
-    clock.classList.remove("clicked");
-  }, 150);
+    setTimeout(() => {
+        clock.classList.remove("click-anim");
+    }, 180);
 }
 
 
