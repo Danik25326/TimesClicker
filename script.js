@@ -1,4 +1,5 @@
 window.onload = function () {
+  // Елементи інтерфейсу
   const clock = document.getElementById("clickableClock");
   const hourHand = document.querySelector(".hour");
   const minuteHand = document.querySelector(".minute");
@@ -7,21 +8,15 @@ window.onload = function () {
   const phonk = document.getElementById("phonk");
   const scoreText = document.getElementById("score");
   const upgradesContainer = document.getElementById("upgrades");
+  const worldTitle = document.getElementById("worldTitle"); // contenteditable в index.html
 
-  const editNameBtn = document.getElementById("editNameBtn");
-  const worldNameSpan = document.getElementById("worldName");
-
+  // Ігрові змінні
   let score = 0;
   let clickPower = 1;
 
-  // ❤️ ЗМІНА НАЗВИ (Earth Time → custom Time)
-  editNameBtn.addEventListener("click", () => {
-    let newName = prompt("Введи нову назву (тільки перше слово):");
-    if (!newName) return;
-    newName = newName.trim().split(" ")[0];
-    worldNameSpan.textContent = newName;
-  });
-
+  // --------------------------
+  // Форматування часу для відображення
+  // --------------------------
   function formatTime(seconds) {
     const units = [
       { name: "століття", value: 60 * 60 * 24 * 365 * 100 },
@@ -34,7 +29,7 @@ window.onload = function () {
       { name: "сек", value: 1 },
     ];
 
-    let remaining = seconds;
+    let remaining = Math.floor(seconds);
     const parts = [];
 
     for (const u of units) {
@@ -49,7 +44,9 @@ window.onload = function () {
     return parts.join(" ");
   }
 
-  // 🔥 ЗМЕНШЕНІ ЦІНИ ×5
+  // --------------------------
+  // Апгрейди (ціни зменшені)
+  // --------------------------
   const upgrades = [
     { name: "📱 Включити телефон", baseCost: 12, bonus: 1, level: 0 },
     { name: "☕ Зробити каву", baseCost: 25, bonus: 2, level: 0 },
@@ -73,6 +70,7 @@ window.onload = function () {
     function updateText() {
       const cost = upgrade.baseCost * (upgrade.level + 1);
       btn.textContent = `${upgrade.name} (Lv.${upgrade.level}) — ${formatTime(cost)}`;
+      btn.disabled = score < cost; // візуально блокувати, якщо немає грошей
     }
 
     updateText();
@@ -92,20 +90,34 @@ window.onload = function () {
     upgrade.update = updateText;
   });
 
-  // показуємо перший апгрейд
-  buttons[0].classList.remove("hidden");
+  // Показуємо тільки перший апгрейд спочатку
+  if (buttons[0]) buttons[0].classList.remove("hidden");
 
-  // відкриття наступного апгрейду після покупки попереднього
   function revealNext(i) {
     if (buttons[i + 1]) {
       buttons[i + 1].classList.remove("hidden");
+      // При відкритті оновлюємо текст/стан кнопки
+      upgrades[i + 1].update?.();
     }
   }
 
+  // --------------------------
+  // Оновлення рахунку
+  // --------------------------
   function updateScore() {
     scoreText.textContent = `Часу зібрано: ${formatTime(score)}`;
+    // Оновимо стани кнопок апгрейдів (щоб вмикалися/вимикалися)
+    buttons.forEach((b, idx) => {
+      if (!b.classList.contains("hidden")) {
+        const cost = upgrades[idx].baseCost * (upgrades[idx].level + 1);
+        b.disabled = score < cost;
+      }
+    });
   }
 
+  // --------------------------
+  // Ефект кліку
+  // --------------------------
   function boomEffect() {
     clock.style.scale = "1.05";
     setTimeout(() => (clock.style.scale = "1"), 120);
@@ -118,52 +130,70 @@ window.onload = function () {
   }
 
   // Клік тільки по годиннику
-  clock.addEventListener("click", addTime);
+  if (clock) clock.addEventListener("click", addTime);
 
-  musicBtn.addEventListener("click", () => {
-    if (phonk.paused) {
-      phonk.volume = 0.4;
-      phonk.play();
-      musicBtn.textContent = "⏸ Зупинити фонк";
-    } else {
-      phonk.pause();
-      musicBtn.textContent = "▶️ Включити фонк";
-    }
-  });
+  // --------------------------
+  // Музика (фонк)
+  // --------------------------
+  if (musicBtn && phonk) {
+    musicBtn.addEventListener("click", () => {
+      if (phonk.paused) {
+        // браузери дозволяють звук лише після дії користувача — клік по кнопці достатній
+        try {
+          phonk.volume = 0.4;
+          phonk.play();
+          musicBtn.textContent = "⏸ Зупинити фонк";
+        } catch (e) {
+          console.warn("Не вдалося запустити аудіо:", e);
+        }
+      } else {
+        phonk.pause();
+        musicBtn.textContent = "▶️ Включити фонк";
+      }
+    });
+  }
 
+  // --------------------------
+  // Оновлення стрілок годинника
+  // --------------------------
   function updateClock() {
     const now = new Date();
     const seconds = now.getSeconds();
     const minutes = now.getMinutes();
     const hours = now.getHours() % 12;
 
-    secondHand.style.transform = `translateX(-50%) rotate(${seconds * 6}deg)`;
-    minuteHand.style.transform = `translateX(-50%) rotate(${minutes * 6 + seconds * 0.1}deg)`;
-    hourHand.style.transform = `translateX(-50%) rotate(${hours * 30 + minutes * 0.5}deg)`;
+    if (secondHand) secondHand.style.transform = `translateX(-50%) rotate(${seconds * 6}deg)`;
+    if (minuteHand) minuteHand.style.transform = `translateX(-50%) rotate(${minutes * 6 + seconds * 0.1}deg)`;
+    if (hourHand) hourHand.style.transform = `translateX(-50%) rotate(${hours * 30 + minutes * 0.5}deg)`;
   }
 
   setInterval(updateClock, 1000);
   updateClock();
   updateScore();
-  // ========== РЕДАГОВАННЯ НАЗВИ ==========
-const worldName = document.getElementById("worldName");
 
-// Забороняємо перенос рядків
-worldName.addEventListener("keypress", (e) => {
-  if (e.key === "Enter") {
-    e.preventDefault();
-    worldName.blur();
+  // --------------------------
+  // РЕДАГУВАННЯ НАЗВИ (ВАРІАНТ C)
+  // Беремо весь введений текст і додаємо " Time" (один раз)
+  // --------------------------
+  if (worldTitle) {
+    // Заборонити Enter
+    worldTitle.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") e.preventDefault();
+    });
+
+    worldTitle.addEventListener("blur", () => {
+      let text = worldTitle.textContent.trim();
+
+      if (text.length === 0) {
+        worldTitle.textContent = "Times Time"; // якщо порожньо — дефолт
+        return;
+      }
+
+      // Якщо користувач вже написав "Time" вкінці — не додаємо ще раз
+      if (!/(\bTime)$/i.test(text)) {
+        text = `${text} Time`;
+      }
+      worldTitle.textContent = text;
+    });
   }
-});
-
-// Коли користувач закінчив редагувати
-worldName.addEventListener("blur", () => {
-  let text = worldName.textContent.trim();
-
-  // Беремо тільки перше слово
-  const firstWord = text.split(" ")[0] || "Earth";
-
-  // Встановлюємо формат: "<перше слово> Time"
-  worldName.textContent = `${firstWord} Time`;
-});
 };
