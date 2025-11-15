@@ -240,3 +240,15 @@ body {
   animation: phonkPulse 1.2s infinite;
   letter-spacing: 1px;
 }
+
+/* Базовий стан обідка */
+#clickableClock {
+    border: 6px solid #4da6ff; /* синій */
+    transition: border-color 0.15s ease, scale 0.12s ease;
+}
+
+/* Стан при кліку */
+#clickableClock.clicked {
+    border-color: #ff4d4d; /* червоний */
+}
+
