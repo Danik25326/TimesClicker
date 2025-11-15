@@ -118,10 +118,17 @@ window.onload = function () {
   // --------------------------
   // Ефект кліку
   // --------------------------
-  function boomEffect() {
-    clock.style.scale = "1.05";
-    setTimeout(() => (clock.style.scale = "1"), 120);
-  }
+function boomEffect() {
+  // Анімація масштабу
+  clock.classList.add("clicked");
+  clock.style.scale = "1.05";
+
+  setTimeout(() => {
+    clock.style.scale = "1";
+    clock.classList.remove("clicked");
+  }, 150);
+}
+
 
   function addTime() {
     score += clickPower;
