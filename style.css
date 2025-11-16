@@ -9,6 +9,7 @@ body {
   justify-content: center;
   align-items: center;
 }
+
 .title-box {
   position: absolute;
   top: 20px;
@@ -48,7 +49,6 @@ body {
   overflow-y: auto;
 }
 
-/* Кнопки апгрейдів */
 .upgrade-btn {
   background: linear-gradient(90deg, #0ea5e9, #3b82f6);
   border: none;
@@ -107,9 +107,44 @@ body {
   height: 250px;
   border: 6px solid #0ea5e9;
   border-radius: 50%;
+  transition: box-shadow 0.12s ease-out, border-color 0.12s ease-out, transform 0.12s ease-out;
   box-shadow: 0 0 30px #0ea5e9, 0 0 60px #0ea5e9, inset 0 0 30px rgba(14, 165, 233, 0.3);
 }
 
+/* КЛАС ДЛЯ КЛІКУ — ТРИГЕРИТЬ АНІМАЦІЮ */
+.clock.click-anim {
+  animation: clickPulse 0.18s ease-out;
+}
+
+/* Анімація неонового спалаху */
+@keyframes clickPulse {
+  0% {
+    box-shadow:
+      0 0 30px #0ea5e9,
+      0 0 60px #0ea5e9,
+      inset 0 0 30px rgba(14,165,233,0.3);
+    border-color: #0ea5e9;
+    transform: scale(1);
+  }
+  50% {
+    box-shadow:
+      0 0 40px #ff3b5c,
+      0 0 80px #ff3b5c,
+      inset 0 0 40px rgba(255,59,92,0.4);
+    border-color: #ff3b5c;
+    transform: scale(1.08);
+  }
+  100% {
+    box-shadow:
+      0 0 30px #0ea5e9,
+      0 0 60px #0ea5e9,
+      inset 0 0 30px rgba(14,165,233,0.3);
+    border-color: #0ea5e9;
+    transform: scale(1);
+  }
+}
+
+/* ===== СТРІЛКИ ГОДИННИКА ===== */
 .hand {
   position: absolute;
   bottom: 50%;
@@ -198,7 +233,6 @@ body {
   overflow: hidden;
 }
 
-/* Блиск при наведенні */
 .phonk-btn::before {
   content: "";
   position: absolute;
@@ -220,7 +254,6 @@ body {
   left: 125%;
 }
 
-/* Ефект пульсу */
 @keyframes phonkPulse {
   0%, 100% {
     box-shadow: 0 0 20px #ec4899,
@@ -240,38 +273,3 @@ body {
   animation: phonkPulse 1.2s infinite;
   letter-spacing: 1px;
 }
-
-/* Клас, який додається при кліку */
-.clock.click-anim {
-    animation: clickPulse 0.18s ease-out;
-}
-
-/* Анімація неонового спалаху */
-@keyframes clickPulse {
-    0% {
-        box-shadow:
-            0 0 30px #0ea5e9,
-            0 0 60px #0ea5e9,
-            inset 0 0 30px rgba(14,165,233,0.3);
-        border-color: #0ea5e9;
-        transform: scale(1);
-    }
-    50% {
-        box-shadow:
-            0 0 40px #ff3b5c,
-            0 0 80px #ff3b5c,
-            inset 0 0 40px rgba(255,59,92,0.4);
-        border-color: #ff3b5c;
-        transform: scale(1.08);
-    }
-    100% {
-        box-shadow:
-            0 0 30px #0ea5e9,
-            0 0 60px #0ea5e9,
-            inset 0 0 30px rgba(14,165,233,0.3);
-        border-color: #0ea5e9;
-        transform: scale(1);
-    }
-}
-
-
