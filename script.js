@@ -8,10 +8,12 @@ window.onload = function () {
   const nextTrack = document.getElementById("nextTrack");
   const phonk = document.getElementById("phonk");
   const scoreText = document.getElementById("score");
+  const upgradesContainer = document.getElementById("upgrades");
 
   let score = 0;
   let clickPower = 1;
 
+  /* 🎧 СПИСОК ТРЕКІВ */
   const tracks = [
     "asphalt-menace.mp3",
     "digital-overdrive.mp3",
@@ -23,52 +25,45 @@ window.onload = function () {
   ].map(name => `https://raw.githubusercontent.com/Danik25326/timeclicker/main/musicList/${name}`);
 
   let currentTrack = 0;
-
-  function updateMusicButton() {
-    musicBtn.textContent = phonk.paused ? "Play" : "Pause";
-  }
+  let isPlaying = false;
 
   function loadTrack(i) {
-    const wasPlaying = !phonk.paused;
     phonk.src = tracks[i];
-    if (wasPlaying) phonk.play();
-    updateMusicButton();
+    if (isPlaying) phonk.play();
   }
 
+  // Початкове завантаження
   loadTrack(currentTrack);
 
-  // Play/Pause
+  /* 🎧 Кнопка Play/Pause */
   musicBtn.addEventListener("click", () => {
-    if (phonk.paused) {
+    if (!isPlaying) {
       phonk.volume = 0.45;
       phonk.play();
+      musicBtn.textContent = "⏸ Зупинити фонк";
+      isPlaying = true;
     } else {
       phonk.pause();
+      musicBtn.textContent = "▶️ Включити фонк";
+      isPlaying = false;
     }
-    updateMusicButton();
   });
 
-  // Prev/Next
+  /* 🎧 Перемикання треків */
   prevTrack.addEventListener("click", () => {
+    if (!isPlaying) return;
     currentTrack = (currentTrack - 1 + tracks.length) % tracks.length;
     loadTrack(currentTrack);
   });
 
   nextTrack.addEventListener("click", () => {
+    if (!isPlaying) return;
     currentTrack = (currentTrack + 1) % tracks.length;
     loadTrack(currentTrack);
   });
 
-  // Click на годинник
-  clock.addEventListener("click", () => {
-    score += clickPower;
-    updateScore();
-    triggerClockAnimation();
-  });
 
-  function updateScore() {
-    scoreText.textContent = `Часу зібрано: ${score} сек`;
-  }
+  /* --- ГОДИННИКОВА ЛОГІКА --- */
 
   function triggerClockAnimation() {
     clock.classList.remove("click-anim");
@@ -76,7 +71,18 @@ window.onload = function () {
     clock.classList.add("click-anim");
   }
 
-  // Годинник
+  function addTime() {
+    score += clickPower;
+    updateScore();
+    triggerClockAnimation();
+  }
+
+  if (clock) clock.addEventListener("click", addTime);
+
+  function updateScore() {
+    scoreText.textContent = `⭐: ${score}`;
+  }
+
   function updateClock() {
     const now = new Date();
     const seconds = now.getSeconds();
