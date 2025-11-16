@@ -13,7 +13,7 @@ window.onload = function () {
   let score = 0;
   let clickPower = 1;
 
-  /* 🎧 СПИСОК ТРЕКІВ */
+  /* 🎧 СПИСОК ТВОЇХ ТРЕКІВ */
   const tracks = [
     "asphalt-menace.mp3",
     "digital-overdrive.mp3",
@@ -25,45 +25,38 @@ window.onload = function () {
   ].map(name => `https://raw.githubusercontent.com/Danik25326/timeclicker/main/musicList/${name}`);
 
   let currentTrack = 0;
-  let isPlaying = false;
 
   function loadTrack(i) {
     phonk.src = tracks[i];
-    if (isPlaying) phonk.play();
+    if (!phonk.paused) phonk.play();
   }
 
-  // Початкове завантаження
   loadTrack(currentTrack);
 
   /* 🎧 Кнопка Play/Pause */
   musicBtn.addEventListener("click", () => {
-    if (!isPlaying) {
+    if (phonk.paused) {
       phonk.volume = 0.45;
       phonk.play();
       musicBtn.textContent = "⏸ Зупинити фонк";
-      isPlaying = true;
     } else {
       phonk.pause();
       musicBtn.textContent = "▶️ Включити фонк";
-      isPlaying = false;
     }
   });
 
   /* 🎧 Перемикання треків */
   prevTrack.addEventListener("click", () => {
-    if (!isPlaying) return;
     currentTrack = (currentTrack - 1 + tracks.length) % tracks.length;
     loadTrack(currentTrack);
   });
 
   nextTrack.addEventListener("click", () => {
-    if (!isPlaying) return;
     currentTrack = (currentTrack + 1) % tracks.length;
     loadTrack(currentTrack);
   });
 
-
-  /* --- ГОДИННИКОВА ЛОГІКА --- */
+  /* --- Далі йде твоя логіка апгрейдів, годинника, анімацій --- */
 
   function triggerClockAnimation() {
     clock.classList.remove("click-anim");
@@ -78,10 +71,6 @@ window.onload = function () {
   }
 
   if (clock) clock.addEventListener("click", addTime);
-
-  function updateScore() {
-    scoreText.textContent = `⭐: ${score}`;
-  }
 
   function updateClock() {
     const now = new Date();
