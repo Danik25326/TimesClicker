@@ -1,23 +1,77 @@
 window.onload = function () {
-  // Елементи інтерфейсу
+  // --- Елементи ---
   const clock = document.getElementById("clickableClock");
   const hourHand = document.querySelector(".hour");
   const minuteHand = document.querySelector(".minute");
   const secondHand = document.querySelector(".second");
   const musicBtn = document.getElementById("musicBtn");
-  const phonk = document.getElementById("phonk");
+  const prevTrack = document.getElementById("prevTrack");
+  const nextTrack = document.getElementById("nextTrack");
+  const player = document.getElementById("player");
   const scoreText = document.getElementById("score");
   const upgradesContainer = document.getElementById("upgrades");
   const worldTitle = document.getElementById("worldTitle");
 
-  // Ігрові змінні
+  // --- Ігрові змінні ---
   let score = 0;
   let clickPower = 1;
+  let isPlaying = false;
+  let currentTrack = 0;
 
-  // Форматування часу
+  // --- Файли музики ---
+  const tracks = [
+    "asphalt-menace.mp3",
+    "digital-overdrive.mp3",
+    "drift-phonk-phonk-music-2-434611.mp3",
+    "drift-phonk-phonk-music-432222.mp3",
+    "phonk-music-409064 (2).mp3",
+    "phonk-music-phonk-2025-432208.mp3",
+    "pixel-drift.mp3"
+  ].map(name => `musicList/${name}`);
+
+  function loadTrack(i) {
+    player.src = tracks[i];
+    if (isPlaying) player.play();
+  }
+
+  loadTrack(currentTrack);
+
+  // --- Кнопка Play/Pause ---
+  musicBtn.addEventListener("click", () => {
+    if (!isPlaying) {
+      player.volume = 0.45;
+      player.play();
+      musicBtn.textContent = "⏸ Зупинити музику";
+      isPlaying = true;
+    } else {
+      player.pause();
+      musicBtn.textContent = "▶️ Включити музику";
+      isPlaying = false;
+    }
+  });
+
+  // --- Перемикання треків ---
+  prevTrack.addEventListener("click", () => {
+    if (!isPlaying) return; // працює тільки якщо музика грає
+    currentTrack = (currentTrack - 1 + tracks.length) % tracks.length;
+    loadTrack(currentTrack);
+  });
+
+  nextTrack.addEventListener("click", () => {
+    if (!isPlaying) return; // працює тільки якщо музика грає
+    currentTrack = (currentTrack + 1) % tracks.length;
+    loadTrack(currentTrack);
+  });
+
+  // --- Форматування часу ---
   function formatTime(seconds) {
     const units = [
-      { name: "год", value: 3600 },
+      { name: "століття", value: 60*60*24*365*100 },
+      { name: "десятиліття", value: 60*60*24*365*10 },
+      { name: "рік", value: 60*60*24*365 },
+      { name: "міс", value: 60*60*24*30 },
+      { name: "дн", value: 60*60*24 },
+      { name: "год", value: 60*60 },
       { name: "хв", value: 60 },
       { name: "сек", value: 1 },
     ];
@@ -34,15 +88,21 @@ window.onload = function () {
     return parts.join(" ");
   }
 
-  // Апгрейди
+  // --- Апгрейди ---
   const upgrades = [
     { name: "📱 Включити телефон", baseCost: 12, bonus: 1, level: 0 },
     { name: "☕ Зробити каву", baseCost: 25, bonus: 2, level: 0 },
     { name: "💻 Увімкнути ноут", baseCost: 700, bonus: 3, level: 0 },
     { name: "🎧 Надіти навушники", baseCost: 2000, bonus: 4, level: 0 },
+    { name: "💪 Почати тренування", baseCost: 20000, bonus: 5, level: 0 },
+    { name: "📚 Відкрити книгу", baseCost: 200000, bonus: 6, level: 0 },
+    { name: "🌇 Вийти на прогулянку", baseCost: 2000000, bonus: 7, level: 0 },
+    { name: "🚀 Почати проєкт", baseCost: 20000000, bonus: 8, level: 0 },
+    { name: "🧠 Медитувати над сенсом часу", baseCost: 200000000, bonus: 9, level: 0 },
   ];
 
   const buttons = [];
+
   upgrades.forEach((upgrade, index) => {
     const btn = document.createElement("button");
     btn.className = "upgrade-btn hidden";
@@ -54,6 +114,7 @@ window.onload = function () {
       btn.textContent = `${upgrade.name} (Lv.${upgrade.level}) — ${formatTime(cost)}`;
       btn.disabled = score < cost;
     }
+
     updateText();
 
     btn.addEventListener("click", () => {
@@ -74,9 +135,9 @@ window.onload = function () {
   if (buttons[0]) buttons[0].classList.remove("hidden");
 
   function revealNext(i) {
-    if (buttons[i + 1]) {
-      buttons[i + 1].classList.remove("hidden");
-      upgrades[i + 1].update?.();
+    if (buttons[i+1]) {
+      buttons[i+1].classList.remove("hidden");
+      upgrades[i+1].update?.();
     }
   }
 
@@ -90,7 +151,7 @@ window.onload = function () {
     });
   }
 
-  // Анімація кліку
+  // --- Анімація кліку ---
   function triggerClockAnimation() {
     clock.classList.remove("click-anim");
     void clock.offsetWidth;
@@ -105,45 +166,19 @@ window.onload = function () {
 
   if (clock) clock.addEventListener("click", addTime);
 
-  // Музика
-  if (musicBtn && phonk) {
-    musicBtn.addEventListener("click", () => {
-      if (phonk.paused) {
-        phonk.volume = 0.4;
-        phonk.play();
-        musicBtn.textContent = "⏸ Зупинити фонк";
-      } else {
-        phonk.pause();
-        musicBtn.textContent = "▶️ Включити фонк";
-      }
-    });
-  }
-
-  // Оновлення годинника
+  // --- Годинник ---
   function updateClock() {
     const now = new Date();
     const seconds = now.getSeconds();
     const minutes = now.getMinutes();
     const hours = now.getHours() % 12;
 
-    if (secondHand) secondHand.style.transform = `translateX(-50%) rotate(${seconds * 6}deg)`;
-    if (minuteHand) minuteHand.style.transform = `translateX(-50%) rotate(${minutes * 6 + seconds * 0.1}deg)`;
-    if (hourHand) hourHand.style.transform = `translateX(-50%) rotate(${hours * 30 + minutes * 0.5}deg)`;
+    if (secondHand) secondHand.style.transform = `translateX(-50%) rotate(${seconds*6}deg)`;
+    if (minuteHand) minuteHand.style.transform = `translateX(-50%) rotate(${minutes*6 + seconds*0.1}deg)`;
+    if (hourHand) hourHand.style.transform = `translateX(-50%) rotate(${hours*30 + minutes*0.5}deg)`;
   }
 
   setInterval(updateClock, 1000);
   updateClock();
   updateScore();
-
-  // Додавання "Time" у заголовок
-  if (worldTitle) {
-    worldTitle.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") e.preventDefault();
-    });
-    worldTitle.addEventListener("blur", () => {
-      let text = worldTitle.textContent.trim();
-      if (!/(\bTime)$/i.test(text)) text += " Time";
-      worldTitle.textContent = text;
-    });
-  }
 };
