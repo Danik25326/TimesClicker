@@ -1,13 +1,13 @@
-/* ===== БАЗА ===== */
+/* ===== Compact + enhanced style for TimesClicker ===== */
 :root{
   --bg1:#0b1220;
   --neon:#0ea5e9;
   --accent:#ec4899;
   --glass: rgba(15,23,42,0.6);
-  --toast-bg: rgba(0,0,0,0.7);
+  --muted:#cfeaff;
 }
 
-/* загальне */
+/* basics */
 *{box-sizing:border-box}
 body{
   margin:0;
@@ -21,7 +21,7 @@ body{
   padding:20px;
 }
 
-/* Заголовок редагований */
+/* Header title */
 .editable-title{
   position:absolute;
   top:28px;
@@ -35,275 +35,114 @@ body{
   user-select:text;
 }
 
-/* Контейнер */
-.container{
-  display:flex;
-  gap:40px; /* зробили більший відступ між панелями щоб годинник не накладався */
-  width:min(1200px,95vw);
-}
+/* layout */
+.container{ display:flex; gap:28px; width:min(1100px,95vw); }
+.left-panel{ width:420px; background:var(--glass); border-radius:14px; padding:14px; box-shadow:0 8px 30px rgba(0,0,0,0.6); min-height:560px; }
+.tabs{ display:flex; gap:8px; margin-bottom:12px; }
+.tab{ flex:1; padding:10px; background:transparent; border:none; color:var(--muted); cursor:pointer; border-radius:8px; transition:all .12s; }
+.tab.active{ background:#111827; box-shadow:0 0 10px rgba(14,165,233,0.12) inset; color:#fff; }
+.tab-body{ min-height:420px; }
+.tab-page{ display:none }
+.tab-page.active{ display:block }
 
-/* Ліва панель + таби */
-.left-panel{
-  width:420px;
-  background:var(--glass);
-  border-radius:14px;
-  padding:14px;
-  box-shadow:0 8px 30px rgba(0,0,0,0.6);
-  min-height:640px; /* трохи вищий, щоб праворуч помістилося */
-}
+/* upgrades */
+.upgrades-container{ display:flex; flex-direction:column; gap:14px; max-height:420px; overflow:auto; padding-right:6px; }
+.upgrade-btn{ background:linear-gradient(90deg,var(--neon),#3b82f6); border:none; color:white; font-size:15px; padding:12px 14px; border-radius:12px; cursor:pointer; text-align:left; display:flex; justify-content:space-between; align-items:center; transition:transform .12s,opacity .12s, box-shadow .12s; box-shadow:0 6px 18px rgba(0,0,0,0.45); }
+.upgrade-btn:disabled{ opacity:.45; cursor:not-allowed }
+.upgrade-btn:hover:not(:disabled){ transform:translateY(-4px); box-shadow:0 12px 30px rgba(0,0,0,0.5); }
 
-/* Таби */
-.tabs{
-  display:flex;
-  gap:8px;
-  margin-bottom:12px;
-}
-.tab{
-  flex:1;
-  padding:10px;
-  background:transparent;
-  border:none;
-  color:#cfeaff;
-  cursor:pointer;
-  border-radius:8px;
-  transition:all .18s;
-}
-.tab.active{
-  background:#111827;
-  box-shadow:0 0 10px rgba(14,165,233,0.12) inset;
-  color:#fff;
-}
+/* skins */
+.skins-grid{ display:flex; gap:10px; flex-wrap:wrap; margin-top:6px; }
+.skin{ width:100px; height:100px; border-radius:12px; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 6px 18px rgba(0,0,0,0.5); border:3px solid transparent; background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent); text-align:center; padding:6px; font-size:13px; }
+.skin.active, .skin.sel, .skin.sel2{ outline:3px solid rgba(255,255,255,0.06); transform:translateY(-4px); }
 
-/* tab body */
-.tab-body{min-height:520px;}
-.tab-page{display:none}
-.tab-page.active{display:block}
+/* achievements */
+.achievements-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:6px; }
+.achievement{ background:#0f1724; padding:10px; border-radius:10px; text-align:center; position:relative; }
+.achievement .progress{ font-size:12px; color:#bcd; margin-top:6px; }
 
-/* upgrades container */
-.upgrades-container{
-  display:flex;
-  flex-direction:column;
-  gap:14px; /* більша відстань між апгрейдами */
-  max-height:420px;
-  overflow:auto;
-  padding-right:6px;
-}
-.upgrade-btn{
-  background:linear-gradient(90deg,var(--neon),#3b82f6);
-  border:none;
-  color:white;
-  font-size:15px;
-  padding:10px 12px;
-  border-radius:10px;
-  cursor:pointer;
-  text-align:left;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  transition:transform .12s,opacity .12s;
-}
-.upgrade-btn:disabled{opacity:.45; cursor:not-allowed}
-.upgrade-btn:hover:not(:disabled){transform:translateY(-3px)}
+/* right panel */
+.right-panel{ width:calc(100% - 420px); display:flex; flex-direction:column; align-items:center; gap:14px; }
 
-/* Skins */
-.skins-grid{display:flex;gap:10px;flex-wrap:wrap}
-.skin{
-  width:100px;height:100px;
-  border-radius:12px;
-  display:flex;align-items:center;justify-content:center;
-  cursor:pointer;
-  box-shadow:0 6px 18px rgba(0,0,0,0.5);
-  border:3px solid transparent;
-}
-.skin.active{outline:3px solid rgba(255,255,255,0.06)}
+/* clock wrapper */
+#clockWrapper{ position:relative; display:flex; align-items:center; gap:28px; justify-content:center; width:100%; }
 
-/* додаткові контроли скіни/ефекти (динамічно рендеряться JS) */
-.skins-section{margin-top:10px}
-.skins-section h4{margin:8px 0 6px 0;font-size:14px;color:#cfeaff}
-
-/* Achievements */
-.achievements-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.achievement{
-  background:#0f1724;padding:10px;border-radius:10px;text-align:center;
-  position:relative;
-}
-.achievement .progress{
-  font-size:12px;color:#bcd;margin-top:6px;
-}
-.achievement .progress-bar{
-  height:8px;background:rgba(255,255,255,0.06);border-radius:6px;margin-top:6px;overflow:hidden;
-}
-.achievement .progress-bar > i{
-  display:block;height:100%;background:linear-gradient(90deg,#8df299,#3b82f6);width:0%;
-  transition:width .4s ease;
-}
-
-/* Right panel (clock + music) */
-.right-panel{
-  width:calc(100% - 460px);
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:14px;
-}
-
-/* Clock */
-#clockWrapper{position:relative;display:flex;align-items:center;gap:24px;flex-direction:column}
-/* Збільшили розмір на ~40% (з 260 -> 364) */
+/* clock — bigger (occupies ~25% of right panel, visually larger) */
 .clock{
   position:relative;
-  width:364px;height:364px;border-radius:50%;
+  width:34%;            /* responsive: occupies a chunk of right panel */
+  max-width:420px;
+  min-width:220px;
+  aspect-ratio:1;
+  border-radius:50%;
   border:6px solid var(--neon);
   box-shadow:0 0 30px var(--neon), 0 0 60px var(--neon), inset 0 0 20px rgba(14,165,233,0.12);
   transition:box-shadow .12s,transform .12s,border-color .12s;
-  display:flex;align-items:center;justify-content:center;
+  display:flex; align-items:center; justify-content:center;
   background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);
   margin:auto;
-  overflow:visible;
 }
 
-/* hand base */
-.hand{
-  position:absolute;bottom:50%;left:50%;transform-origin:bottom;transform:translateX(-50%) rotate(0deg);
-  border-radius:2px;
-  background:#001f5f; /* темно-сині за замовчуванням */
-}
+/* possible shapes */
+.clock.shape-square{ border-radius:18px; }
+.clock.shape-oval{ border-radius:40%/60%; }
+.clock.shape-diamond{ transform:rotate(45deg); }
+.clock.shape-diamond .hand, .clock.shape-diamond .center-dot{ transform:rotate(-45deg); }
 
-/* hand sizes (scale a bit with clock) */
-.hour{width:10px;height:75px}
-.minute{width:8px;height:110px}
-.second{width:4px;height:140px;background:var(--accent)}
-.center-dot{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:14px;height:14px;background:var(--accent);border-radius:50%}
+/* hands */
+.hand{ position:absolute; bottom:50%; left:50%; transform-origin:bottom; transform:translateX(-50%) rotate(0deg); border-radius:2px; background:#001f5f; }
+.hour{ width:8px; height:58px; }
+.minute{ width:6px; height:86px; }
+.second{ width:4px; height:110px; background:var(--accent); }
 
-/* Click cloud (справа від годинника) */
-.click-cloud{
-  width:220px;
-  padding:12px;
-  background:rgba(255,255,255,0.03);
-  border-radius:12px;
-  text-align:center;
-  font-weight:700;
-  font-size:14px;
-  color:#cfeaff;
-  box-shadow:0 6px 18px rgba(0,0,0,0.5);
-  opacity:0;
-  transform:translateY(8px);
-  transition:opacity .28s, transform .28s;
-  pointer-events:none;
-  position:absolute;
-  top:8px;
-  right:-12px;
-}
-.click-cloud.show{opacity:1;transform:translateY(0);}
+/* center */
+.center-dot{ position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:12px; height:12px; background:var(--accent); border-radius:50%; }
 
-/* rapid combo bubble (зростає при rapid click) */
-.combo-bubble{
-  position:absolute;
-  top:-28px;
-  left:50%;
-  transform:translateX(-50%) scale(0.01);
-  min-width:44px;
-  height:44px;
-  padding:8px 12px;
-  border-radius:999px;
-  background:linear-gradient(90deg,#ff7a7a,#ff3b5c);
-  color:white;
-  font-weight:800;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  box-shadow:0 8px 30px rgba(0,0,0,0.45);
-  transition:transform .12s ease;
-  z-index:30;
-}
+/* click cloud (default right of clock) */
+.click-cloud{ width:150px; padding:10px; background:rgba(255,255,255,0.03); border-radius:12px; text-align:center; font-weight:600; font-size:14px; color:var(--muted); box-shadow:0 6px 18px rgba(0,0,0,0.5); opacity:1; transition:opacity .2s,transform .2s; }
+#clickGain{ font-size:16px; color:var(--accent); }
+#totalCloud{ font-size:13px; color:#a8d8ff; margin-top:6px; }
 
-/* Score text */
-#score{font-size:18px;text-shadow:0 0 10px var(--neon)}
+/* floating gains */
+.floating-gain{ position:absolute; right:-10px; top:20px; font-weight:700; color:#ffc8d0; pointer-events:none; transition:all .9s ease; opacity:1; }
 
-/* Music player */
-.music-player{display:flex;gap:8px;align-items:center}
-.phonk-btn{
-  padding:12px 18px;border-radius:50px;background:linear-gradient(90deg,var(--neon),#3b82f6);
-  border:none;color:white;font-weight:700;cursor:pointer;box-shadow:0 0 18px rgba(14,165,233,0.18);
-}
-.music-switch{padding:10px 12px;border-radius:12px;background:linear-gradient(90deg,#8b5cf6,#ec4899);border:none;cursor:pointer;color:white;font-weight:700}
-.now-playing{margin-top:6px;font-size:14px;color:#cfeaff}
+/* rapid bubble */
+.rapid-bubble{ position:absolute; right:-10px; top:-12px; background:linear-gradient(180deg,#ff9ea6,#ff3b5c); border-radius:999px; display:flex; align-items:center; justify-content:center; color:white; font-weight:700; box-shadow:0 8px 30px rgba(255,59,92,0.12); transition:all .18s ease; transform:translateY(0); pointer-events:none; }
+.rapid-bubble.hidden{ opacity:0; transform:scale(.6); width:8px; height:8px; }
+.rapid-bubble.popped{ transform:scale(1.2); opacity:0; }
 
-/* Click animation variants (classes applied to .clock) */
-.clock.click-effect-red{animation:clickPulse .18s ease-out}
-.clock.click-effect-blue{animation:clickBlue .22s ease-out}
-.clock.click-effect-glitch{animation:clickGlitch .28s steps(2)}
-.clock.click-effect-blackhole{animation:clickHole .36s ease-in-out}
-.clock.click-effect-ripple{animation:clickRipple .38s ease-out}
+/* click animations - implement via classes referenced in JS */
+.anim-flash-red{ animation:flashRed .42s ease-out; }
+@keyframes flashRed{ 0%{ box-shadow:0 0 30px var(--neon); transform:scale(1)} 50%{ box-shadow:0 0 60px #ff3b5c; transform:scale(1.06)} 100%{ box-shadow:0 0 30px var(--neon); transform:scale(1)} }
+.anim-bolt-blue{ animation:boltBlue .42s linear; }
+@keyframes boltBlue{ 0%{ box-shadow:0 0 10px #0ea5e9} 50%{ box-shadow:0 0 60px #0ea5e9; transform:scale(1.04)} 100%{ box-shadow:0 0 10px #0ea5e9; transform:scale(1)} }
+.anim-glitch{ animation:glitch .42s steps(2); }
+@keyframes glitch{ 20%{ transform:translateX(2px) } 40%{ transform:translateX(-2px) } 60%{ transform:translateY(1px) } 100%{ transform:translateY(0) } }
+.anim-blackhole{ animation:blackhole .42s ease-in-out; }
+@keyframes blackhole{ 0%{ transform:scale(1) } 50%{ transform:scale(.86) filter:brightness(.8) } 100%{ transform:scale(1) } }
+.anim-ripple{ animation:ripple .42s ease-out; }
+@keyframes ripple{ 0%{ box-shadow:0 0 4px rgba(255,255,255,0.02)} 50%{ box-shadow:0 0 80px rgba(14,165,233,0.12); transform:scale(1.03)} 100%{ box-shadow:0 0 4px rgba(255,255,255,0.02)} }
 
-@keyframes clickPulse{
-  0%{box-shadow:0 0 30px var(--neon);border-color:var(--neon);transform:scale(1)}
-  50%{box-shadow:0 0 40px #ff3b5c; border-color:#ff3b5c; transform:scale(1.04)}
-  100%{box-shadow:0 0 30px var(--neon);border-color:var(--neon);transform:scale(1)}
-}
-@keyframes clickBlue{
-  0%{box-shadow:0 0 30px var(--neon);transform:scale(1)}
-  50%{box-shadow:0 0 60px #0ea5e9, inset 0 0 30px #0ea5e9; transform:scale(1.06)}
-  100%{box-shadow:0 0 30px var(--neon);transform:scale(1)}
-}
-@keyframes clickGlitch{
-  0%{transform:translateX(0) scale(1)}
-  30%{transform:translateX(-6px) scale(1.02)}
-  60%{transform:translateX(6px) scale(1)}
-  100%{transform:translateX(0) scale(1)}
-}
-@keyframes clickHole{
-  0%{transform:scale(1);filter:none}
-  50%{transform:scale(.84);filter:brightness(.6) saturate(.6)}
-  100%{transform:scale(1);filter:none}
-}
-@keyframes clickRipple{
-  0%{box-shadow:0 0 0 rgba(255,255,255,0);transform:scale(1)}
-  50%{box-shadow:0 0 80px rgba(14,165,233,0.12);transform:scale(1.03)}
-  100%{box-shadow:0 0 0 rgba(255,255,255,0);transform:scale(1)}
-}
+/* score */
+#score{ font-size:18px; text-shadow:0 0 10px var(--neon); }
 
-/* Hand skins (applied as classes to .clock or .hand) */
-/* dark-blue (default) */
-.hand.skin-dark{background:#001f5f}
-/* neon */
-.hand.skin-neon{background:linear-gradient(180deg,#0ea5e9,#3b82f6);box-shadow:0 0 12px rgba(14,165,233,0.25)}
-/* pixel (8-bit) */
-.hand.skin-pixel{background:#111;border:2px solid #8b5cf6;box-shadow:none;border-radius:1px}
-/* chrome */
-.hand.skin-chrome{background:linear-gradient(90deg,#e6e9ee,#cfd6e3);box-shadow:0 0 8px rgba(255,255,255,0.08)}
-/* transparent with glow */
-.hand.skin-glow{background:transparent;border:2px solid rgba(255,255,255,0.06);box-shadow:0 0 18px rgba(14,165,233,0.12)}
+/* music controls with hover shine */
+.music-player{ display:flex; gap:8px; align-items:center; }
+.phonk-btn{ padding:12px 18px; border-radius:50px; background:linear-gradient(90deg,var(--neon),#3b82f6); border:none; color:white; font-weight:700; cursor:pointer; box-shadow:0 0 18px rgba(14,165,233,0.18); transition:transform .12s, box-shadow .12s; position:relative; overflow:hidden; }
+.phonk-btn::after{ content:""; position:absolute; left:-40%; top:0; width:40%; height:100%; background:linear-gradient(90deg, rgba(255,255,255,0.2), rgba(255,255,255,0)); transform:skewX(-20deg); transition:all .6s; opacity:0; }
+.phonk-btn.btn-hover{ transform:translateY(-3px); box-shadow:0 18px 40px rgba(14,165,233,0.2); }
+.phonk-btn.btn-hover::after{ left:110%; opacity:1; transform:translateX(-160%); transition:all .8s; }
+.phonk-btn.btn-active{ transform:scale(.98); }
 
-/* Time tunnel for reverb */
-.time-tunnel{
-  position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity .25s;z-index:40;
-  background:radial-gradient(circle at center, rgba(255,80,80,0.06), rgba(10,10,20,0.6));
-  backdrop-filter:blur(4px);
-}
-.time-tunnel.active{opacity:1;animation:tunnelSpin 2.2s linear}
-@keyframes tunnelSpin{0%{transform:scale(1) rotate(0deg)}100%{transform:scale(1.05) rotate(360deg)}}
+.music-switch{ padding:10px 12px; border-radius:12px; background:linear-gradient(90deg,#8b5cf6,#ec4899); border:none; cursor:pointer; color:white; font-weight:700; transition:transform .12s, box-shadow .12s; }
+.music-switch.btn-hover{ transform:translateY(-3px); box-shadow:0 10px 28px rgba(0,0,0,0.4); }
+.music-switch.btn-active{ transform:scale(.98); }
 
-/* Toast (повідомлення знизу) */
-.toast-container{
-  position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:1000;display:flex;flex-direction:column;gap:8px;align-items:center;
-}
-.toast{
-  background:var(--toast-bg);color:#fff;padding:10px 14px;border-radius:10px;font-weight:700;box-shadow:0 8px 30px rgba(0,0,0,0.5);
-  transform:translateY(20px);opacity:0;transition:all .28s;
-}
-.toast.show{transform:translateY(0);opacity:1}
+/* toast */
+#toastRoot{ position:fixed; left:50%; transform:translateX(-50%); bottom:18px; z-index:1000; display:flex; flex-direction:column; gap:10px; align-items:center; pointer-events:none; width:320px; max-width:90vw; }
+.toast{ background:linear-gradient(90deg,#0f1724,#111827); padding:12px 16px; border-radius:10px; box-shadow:0 10px 30px rgba(0,0,0,0.6); opacity:0; transform:translateY(12px); transition:all .32s; color:#fff; pointer-events:auto; text-align:center; }
+.toast.visible{ opacity:1; transform:translateY(0); }
 
-/* combo pop animation on burst */
-.combo-pop{
-  animation:comboPop .36s ease forwards;
-}
-@keyframes comboPop{
-  0%{transform:translateX(-50%) scale(0.01);opacity:1}
-  40%{transform:translateX(-50%) scale(1.15);opacity:1}
-  100%{transform:translateX(-50%) scale(1);opacity:0}
-}
-
-/* scrollbar small */
-.upgrades-container::-webkit-scrollbar{width:8px}
-.upgrades-container::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.06);border-radius:8px}
+/* floating + small helpers */
+.upgrades-container::-webkit-scrollbar{ width:8px }
+.upgrades-container::-webkit-scrollbar-thumb{ background:rgba(255,255,255,0.06); border-radius:8px }
