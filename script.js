@@ -1,4 +1,7 @@
-/* TimesClicker — main script (updated with skins, combo bubble, toasts) */
+/* TimesClicker — compact + extended features
+   - keeps original behaviour (music, upgrades, reverb, stats)
+   - adds skins, rapid-click bubble, toasts, progressive upgrades, button animations
+*/
 window.onload = function () {
   // DOM
   const clock = document.getElementById("clickableClock");
@@ -26,52 +29,25 @@ window.onload = function () {
   const achRoot = document.getElementById("achievements");
   const clockWrapper = document.getElementById("clockWrapper");
 
-  // State
-  let score = 0;               // virtual time spent
-  let clickPower = 1;         // seconds per click
-  let autoRate = 0;           // seconds per second from auto upgrades
-  let isPlaying = false;
-  let currentTrack = 0;
-  let sessionStart = Date.now();
-  let totalUpgradesBought = 0;
-  let maxPerClick = 1;
-  let prestigeMultiplier = 1.0;
+  // State (core)
+  let score = 0, clickPower = 1, autoRate = 0, isPlaying = false, currentTrack = 0;
+  let sessionStart = Date.now(), totalUpgradesBought = 0, maxPerClick = 1, prestigeMultiplier = 1.0;
   let clickCloudTotal = 0;
 
-  // --- ADD: combo/rapid-click state
-  let clickBuffer = []; // timestamps for rapid click detection
-  let comboCount = 0;
-  let comboTimeout = null;
-  const COMBO_MIN = 10; // min clicks
-  const COMBO_WINDOW_MS = 100; // period threshold per click (0.1s)
-  const COMBO_MAX_SIZE = 22; // visual max bubble scale (clamped)
-  // create combo bubble element
-  const comboBubble = document.createElement("div");
-  comboBubble.className = "combo-bubble";
-  comboBubble.style.display = "none";
-  clockWrapper.appendChild(comboBubble);
+  // Rapid-click buffer & bubble
+  let clickBuffer = []; // timestamps ms
+  let rapidActive = false;
+  let rapidAccum = 0; // total gained during rapid session
+  let rapidCount = 0; // number of clicks in current rapid session
+  const RAPID_THRESHOLD = 10;      // minimum clicks to start accumulation
+  const RAPID_WINDOW = 500;        // ms window to count (<= 500ms per request)
+  const RAPID_IDLE = 500;          // ms idle to consider session finished
+  const BUBBLE_MAX = 160;          // px max bubble size
+  let lastClickTs = 0;
+  let rapidTimeout = null;
 
-  // Toast container
-  const toastContainer = document.createElement("div");
-  toastContainer.className = "toast-container";
-  document.body.appendChild(toastContainer);
-  function showToast(text, time = 2400) {
-    const t = document.createElement("div");
-    t.className = "toast";
-    t.textContent = text;
-    toastContainer.appendChild(t);
-    // show
-    requestAnimationFrame(()=> t.classList.add("show"));
-    setTimeout(()=> {
-      t.classList.remove("show");
-      setTimeout(()=> t.remove(), 300);
-    }, time);
-  }
-
-  // Tracks (assume files are in musicList/)
-  const trackNames = [
-    "Фонк №1","Фонк №2","Фонк №3","Фонк №4","Фонк №5","Фонк №6","Фонк №7"
-  ];
+  // Tracks
+  const trackNames = ["Фонк №1","Фонк №2","Фонк №3","Фонк №4","Фонк №5","Фонк №6","Фонк №7"];
   const tracks = [
     "asphalt-menace.mp3",
     "digital-overdrive.mp3",
@@ -82,43 +58,23 @@ window.onload = function () {
     "pixel-drift.mp3"
   ].map(x => `musicList/${x}`);
 
-  // Load track
   function loadTrack(i){
-    player.src = tracks[i];
-    nowPlaying.textContent = `Зараз: ${trackNames[i]}`;
-    if(isPlaying) player.play();
+    currentTrack = i % tracks.length;
+    player.src = tracks[currentTrack];
+    nowPlaying.textContent = `Зараз: ${trackNames[currentTrack]}`;
+    if(isPlaying) player.play().catch(()=>{});
   }
   loadTrack(0);
+  player.addEventListener("ended", ()=> loadTrack((currentTrack+1)%tracks.length));
 
-  // when ended -> next
-  player.addEventListener("ended", () => {
-    currentTrack = (currentTrack + 1) % tracks.length;
-    loadTrack(currentTrack);
+  musicBtn.addEventListener("click", ()=>{
+    if(!isPlaying){ isPlaying = true; player.volume = 0.45; player.play().catch(()=>{}); musicBtn.textContent = "⏸ Зупинити музику"; }
+    else { isPlaying = false; player.pause(); musicBtn.textContent = "▶️ Включити музику"; }
   });
+  prevTrack.addEventListener("click", ()=> loadTrack((currentTrack-1+tracks.length)%tracks.length));
+  nextTrack.addEventListener("click", ()=> loadTrack((currentTrack+1)%tracks.length));
 
-  musicBtn.addEventListener("click", () => {
-    if(!isPlaying){
-      isPlaying = true;
-      player.volume = 0.45;
-      player.play().catch(()=>{ /* autoplay restrictions handled by user click */ });
-      musicBtn.textContent = "⏸ Зупинити музику";
-    } else {
-      isPlaying = false;
-      player.pause();
-      musicBtn.textContent = "▶️ Включити музику";
-    }
-  });
-
-  prevTrack.addEventListener("click", () => {
-    currentTrack = (currentTrack - 1 + tracks.length) % tracks.length;
-    loadTrack(currentTrack);
-  });
-  nextTrack.addEventListener("click", () => {
-    currentTrack = (currentTrack + 1) % tracks.length;
-    loadTrack(currentTrack);
-  });
-
-  // format time (seconds) into units
+  // format seconds into human readable
   function formatTime(seconds){
     seconds = Math.floor(seconds);
     const units = [
@@ -131,22 +87,18 @@ window.onload = function () {
       {name:"хв", value:60},
       {name:"сек", value:1},
     ];
-    let remaining = seconds;
-    const parts = [];
+    let rem = seconds, parts = [];
     for(const u of units){
-      const amt = Math.floor(remaining / u.value);
-      if(amt>0){
-        parts.push(`${amt} ${u.name}`);
-        remaining %= u.value;
-      }
+      const amt = Math.floor(rem / u.value);
+      if(amt>0){ parts.push(`${amt} ${u.name}`); rem %= u.value; }
     }
     return parts.length ? parts.join(" ") : `${seconds} сек`;
   }
 
-  // Upgrades: mix of click and auto (kept original)
+  // Upgrades (kept same names & balance as original)
   const upgrades = [
     { name:"Кліпати очима", baseCost:1, type:"click", bonus:1, level:0, desc:"Кліп - мінус секунду швидко." },
-    { name:"Включити телефон", baseCost:8, type:"auto", bonus:1, level:0, desc:"Телефон віднімає час автоматично (1 сек / 5 с базово)." },
+    { name:"Включити телефон", baseCost:8, type:"auto", bonus:1, level:0, desc:"Телефон віднімає час автоматично." },
     { name:"Гортати стрічку новин", baseCost:25, type:"auto", bonus:3, level:0, desc:"Погладжування стрічки — пасивний втрачач часу." },
     { name:"Невеликий мем-тур", baseCost:90, type:"click", bonus:2, level:0, desc:"Клік дає більше втрат." },
     { name:"Автоперегортання", baseCost:450, type:"auto", bonus:10, level:0, desc:"Серйозна автоматизація." },
@@ -156,62 +108,40 @@ window.onload = function () {
     { name:"Життєвий крінж", baseCost:800000, type:"auto", bonus:500, level:0, desc:"Топовий авто-витрачальник." },
   ];
 
-  // Render upgrades (progressive reveal already implemented)
+  // Render upgrades with progressive reveal
   const buttons = [];
   upgrades.forEach((up, idx) => {
     const btn = document.createElement("button");
     btn.className = "upgrade-btn hidden";
-    btn.addEventListener("click", () => buyUpgrade(idx));
+    btn.addEventListener("click", ()=> buyUpgrade(idx));
     upgradesContainer.appendChild(btn);
     buttons.push(btn);
-
-    up.update = function(){
-      const cost = Math.floor(up.baseCost * Math.pow(1.15, up.level));
+    up.getCost = ()=> Math.floor(up.baseCost * Math.pow(1.15, up.level));
+    up.update = ()=> {
+      const cost = up.getCost();
       btn.textContent = `${up.name} (Lv.${up.level}) — ${formatTime(cost)}`;
       btn.disabled = score < cost;
     };
-    up.getCost = function(){
-      return Math.floor(up.baseCost * Math.pow(1.15, up.level));
-    };
     up.update();
   });
-  if(buttons[0]) buttons[0].classList.remove("hidden");
+  if(buttons[0]) buttons[0].classList.remove("hidden"); // reveal first
 
-  function revealNext(i){
-    if(buttons[i+1]) buttons[i+1].classList.remove("hidden");
-  }
-
+  function revealNext(i){ if(buttons[i+1]) buttons[i+1].classList.remove("hidden"); }
   function buyUpgrade(i){
-    const up = upgrades[i];
-    const cost = up.getCost();
+    const up = upgrades[i]; const cost = up.getCost();
     if(score < cost) return;
-    score -= cost;
-    up.level++;
-    totalUpgradesBought++;
-    if(up.type === "click"){
-      clickPower += Math.round(up.bonus * prestigeMultiplier);
-      if(clickPower > maxPerClick) maxPerClick = clickPower;
-    } else {
-      autoRate += Math.round(up.bonus * prestigeMultiplier);
-    }
-    // progressive reveal - show next every buy
-    up.update();
-    revealNext(i);
-    updateAllButtons();
-    updateScore();
-    updateStats();
+    score -= cost; up.level++; totalUpgradesBought++;
+    if(up.type==="click"){ clickPower += Math.round(up.bonus * prestigeMultiplier); if(clickPower>maxPerClick) maxPerClick = clickPower; }
+    else { autoRate += Math.round(up.bonus * prestigeMultiplier); }
+    up.update(); revealNext(i); updateAllButtons(); updateScore(); updateStats();
+    // achievement: first purchase
+    if(totalUpgradesBought===1) grantAchievement("ach3");
   }
-
   function updateAllButtons(){
-    upgrades.forEach((up, idx) => {
-      up.update();
-      if(!buttons[idx].classList.contains("hidden")){
-        buttons[idx].disabled = score < up.getCost();
-      }
-    });
+    upgrades.forEach((up, idx)=>{ up.update(); if(!buttons[idx].classList.contains("hidden")) buttons[idx].disabled = score < up.getCost(); });
   }
 
-  // Score / UI updates
+  // Score / Stats UI
   function updateScore(){
     scoreText.textContent = `Часу витрачено: ${formatTime(score)}`;
     cloudTotalEl.textContent = `${formatTime(clickCloudTotal)}`;
@@ -225,311 +155,232 @@ window.onload = function () {
     prestigeMultEl.textContent = `${prestigeMultiplier.toFixed(2)}×`;
   }
 
-  // Click animation and bubble
-  function triggerClockAnimation(effect = 'red'){
-    // remove all possible effect classes, then add selected
-    clock.classList.remove("click-anim","click-effect-red","click-effect-blue","click-effect-glitch","click-effect-blackhole","click-effect-ripple");
-    // pick class by selected effect
-    if(effect === 'red') clock.classList.add("click-effect-red");
-    else if(effect === 'blue') clock.classList.add("click-effect-blue");
-    else if(effect === 'glitch') clock.classList.add("click-effect-glitch");
-    else if(effect === 'blackhole') clock.classList.add("click-effect-blackhole");
-    else if(effect === 'ripple') clock.classList.add("click-effect-ripple");
-    // remove after short timeout
+  // Click animation skins (5)
+  const clickSkins = [
+    {id:"flash-red", fn:()=> clock.classList.add("anim-flash-red")},
+    {id:"bolt-blue", fn:()=> clock.classList.add("anim-bolt-blue")},
+    {id:"glitch", fn:()=> clock.classList.add("anim-glitch")},
+    {id:"blackhole", fn:()=> clock.classList.add("anim-blackhole")},
+    {id:"ripple", fn:()=> clock.classList.add("anim-ripple")}
+  ];
+  let currentClickSkin = 0;
+  function triggerClockAnimation(){
+    // remove all anim classes then add selected briefly
+    clickSkins.forEach(s => clock.classList.remove(s.id, "anim-flash-red","anim-bolt-blue","anim-glitch","anim-blackhole","anim-ripple"));
+    const skin = clickSkins[currentClickSkin];
+    if(skin) skin.fn();
     setTimeout(()=> {
-      clock.classList.remove("click-effect-red","click-effect-blue","click-effect-glitch","click-effect-blackhole","click-effect-ripple");
+      clickSkins.forEach(s => clock.classList.remove(s.id, "anim-flash-red","anim-bolt-blue","anim-glitch","anim-blackhole","anim-ripple"));
     }, 420);
   }
 
+  // Floating + bubble logic
   function showFloating(text){
-    // create floating element near clock on the right
     const el = document.createElement("div");
+    el.className = "floating-gain";
     el.textContent = text;
-    el.style.position = "absolute";
-    el.style.right = "-10px";
-    el.style.top = "30px";
-    el.style.color = "#ffccd1";
-    el.style.fontWeight = "700";
-    el.style.opacity = "1";
-    el.style.transition = "transform 900ms ease-out, opacity 900ms";
-    document.getElementById("clockWrapper").appendChild(el);
-    requestAnimationFrame(()=> {
-      el.style.transform = "translateX(40px) translateY(-60px)";
-      el.style.opacity = "0";
-    });
-    setTimeout(()=> el.remove(), 920);
+    clockWrapper.appendChild(el);
+    requestAnimationFrame(()=> { el.style.transform = "translateY(-40px)"; el.style.opacity = "0"; });
+    setTimeout(()=> el.remove(), 900);
   }
 
-  // Click handler (keeps original behavior) + rapid combo detection
-  // currentClickEffect chosen from clickEffects below (default 'red')
-  let currentClickEffect = 'red';
+  // Bubble element (for rapid click)
+  let bubble = document.createElement("div");
+  bubble.className = "rapid-bubble hidden";
+  clockWrapper.appendChild(bubble);
+  function updateBubbleVisual(sizePx, text){
+    bubble.style.width = bubble.style.height = sizePx + "px";
+    bubble.textContent = text || "";
+  }
+  function showBubble(){ bubble.classList.remove("hidden"); }
+  function hideBubble(){ bubble.classList.add("hidden"); updateBubbleVisual(8,""); }
+
+  // Add time on click (normal)
   function addTime(){
-    const gained = Math.round(clickPower * 1); // multiplied already by prestige when bought
+    const gained = Math.round(clickPower);
     score += gained;
     clickCloudTotal += gained;
     clickGainEl.textContent = `+${formatTime(gained)}`;
     showFloating(`+${formatTime(gained)}`);
-    triggerClockAnimation(currentClickEffect);
+    triggerClockAnimation();
     if(gained > maxPerClick) maxPerClick = gained;
     updateScore(); updateStats();
-
-    // --- ADD: rapid-click detection
-    const now = Date.now();
-    clickBuffer.push(now);
-    // keep only last COMBO_WINDOW_MS window *but also allow accumulation across many clicks*
-    clickBuffer = clickBuffer.filter(t => now - t <= 1000); // keep last 1s for counting speed bursts
-    // count how many clicks within last COMBO_WINDOW_MS sliding windows
-    // We'll detect: if there are >= COMBO_MIN clicks such that average spacing <= COMBO_WINDOW_MS
-    if(clickBuffer.length >= COMBO_MIN){
-      // compute average interval across last COMBO_MIN
-      const last = clickBuffer.slice(-COMBO_MIN);
-      let intervals = 0;
-      for(let i=1;i<last.length;i++) intervals += (last[i]-last[i-1]);
-      const avg = intervals / (last.length-1);
-      if(avg <= COMBO_WINDOW_MS){
-        // start/extend combo
-        comboCount += 1;
-        showComboBubble(clickBuffer.length);
-        // reset combo timeout to detect end of burst
-        if(comboTimeout) clearTimeout(comboTimeout);
-        comboTimeout = setTimeout(()=> {
-          // on combo end -> burst/pop
-          popCombo(clickBuffer.length);
-          comboCount = 0;
-          clickBuffer = [];
-        }, 180); // short wait after last click
-      }
-    }
+    lastClickTs = Date.now();
+    handleRapidClick(); // track for rapid combo
+    // achievement: first click
+    if(clickCloudTotal >= 1) grantAchievement("ach1");
   }
   clock.addEventListener("click", addTime);
 
-  // SHOW combo bubble above clock, scale with clicks (clamped)
-  function showComboBubble(clicks){
-    const size = Math.min(COMBO_MAX_SIZE, Math.max(0, clicks));
-    comboBubble.style.display = "flex";
-    comboBubble.textContent = `x${clicks}`;
-    const scale = 0.7 + (size / COMBO_MAX_SIZE) * 1.3;
-    comboBubble.style.transform = `translateX(-50%) scale(${scale})`;
-    // keep visible; final pop handled by popCombo
-  }
-  function popCombo(clicks){
-    if(clicks < COMBO_MIN) {
-      comboBubble.style.transform = `translateX(-50%) scale(0.01)`;
-      comboBubble.style.display = "none";
-      return;
+  // Rapid-click detection & accumulation logic
+  function handleRapidClick(){
+    const now = Date.now();
+    clickBuffer.push(now);
+    // keep only those within RAPID_WINDOW
+    clickBuffer = clickBuffer.filter(t => now - t <= RAPID_WINDOW);
+    // if threshold reached, start accumulation
+    if(clickBuffer.length >= RAPID_THRESHOLD){
+      if(!rapidActive){
+        rapidActive = true;
+        rapidAccum = 0;
+        rapidCount = 0;
+        showBubble();
+      }
+      // accumulate: each click adds clickPower (rounded)
+      rapidAccum += clickPower;
+      rapidCount++;
+      // compute bubble size by rapidCount, capped
+      const size = Math.min(BUBBLE_MAX, 24 + rapidCount * 8);
+      updateBubbleVisual(size, `+${formatTime(rapidAccum)}`);
     }
-    // compute gained from burst (approx): sum of clickPower for last clicks
-    // For a nicer message, show count and virtual seconds gained during burst
-    const gained = Math.round(clickPower * (clicks)); // simple
-    // visual pop
-    comboBubble.classList.add("combo-pop");
-    comboBubble.textContent = `ВИТРАТИ: ${formatTime(gained)}`;
-    setTimeout(()=> {
-      comboBubble.classList.remove("combo-pop");
-      comboBubble.style.transform = `translateX(-50%) scale(0.01)`;
-      comboBubble.style.display = "none";
-    }, 380);
-    // also show floating text and add to score/cloud if you want (we choose: it's already added per-click)
-    // show toast summary
-    showToast(`Комбо x${clicks} → ${formatTime(gained)} витрачено`);
+
+    // reset idle timer
+    if(rapidTimeout) clearTimeout(rapidTimeout);
+    rapidTimeout = setTimeout(()=> finalizeRapid(now), RAPID_IDLE);
   }
 
-  // Auto tick (per second)
-  setInterval(() => {
-    // autoRate is seconds per second (total passive loss)
-    const gained = Math.round(autoRate * 1);
-    if(gained>0){
-      score += gained;
-      clickCloudTotal += gained;
-      updateScore();
-      updateStats();
+  function finalizeRapid(ts){
+    // if we were in rapid mode -> pop bubble
+    if(rapidActive){
+      // pop animation (we'll briefly show a "popped" class)
+      bubble.classList.add("popped");
+      setTimeout(()=> bubble.classList.remove("popped"), 260);
+      // show floating summary
+      showFloating(`Витрачено: ${formatTime(rapidAccum)}`);
+      // keep the rapidAccum already added to score & clickCloudTotal (we added on each click)
+      // grant an achievement if big combo
+      if(rapidAccum >= 100) grantAchievement("ach2"); // example: 100 сек
+      // reset
+      rapidActive = false;
+      rapidAccum = 0;
+      rapidCount = 0;
+      setTimeout(()=> hideBubble(), 260);
     }
-    // update real-time display
+    clickBuffer = [];
+  }
+
+  // Auto tick
+  setInterval(()=> {
+    const gained = Math.round(autoRate);
+    if(gained>0){ score += gained; clickCloudTotal += gained; updateScore(); updateStats(); }
     updateStats();
   }, 1000);
 
-  // Clock hands
+  // Clock hands real time (smooth)
   function updateClockHands(){
     const now = new Date();
-    const s = now.getSeconds();
-    const m = now.getMinutes();
-    const h = now.getHours()%12;
+    const s = now.getSeconds() + now.getMilliseconds()/1000;
+    const m = now.getMinutes() + s/60;
+    const h = now.getHours()%12 + m/60;
     if(secondHand) secondHand.style.transform = `translateX(-50%) rotate(${s*6}deg)`;
-    if(minuteHand) minuteHand.style.transform = `translateX(-50%) rotate(${m*6 + s*0.1}deg)`;
-    if(hourHand) hourHand.style.transform = `translateX(-50%) rotate(${h*30 + m*0.5}deg)`;
+    if(minuteHand) minuteHand.style.transform = `translateX(-50%) rotate(${m*6}deg)`;
+    if(hourHand) hourHand.style.transform = `translateX(-50%) rotate(${h*30}deg)`;
+    requestAnimationFrame(updateClockHands);
   }
-  setInterval(updateClockHands,1000);
   updateClockHands();
 
-  // Skins (clock border / general) — original + we add click effects and hand skins
-  const skins = [
-    {name:"Неон синій", style:()=>{ clock.style.borderColor="#0ea5e9"; clock.style.boxShadow="0 0 30px #0ea5e9"; }},
-    {name:"Пурпурний", style:()=>{ clock.style.borderColor="#8b5cf6"; clock.style.boxShadow="0 0 30px #8b5cf6"; }},
-    {name:"Рожевий", style:()=>{ clock.style.borderColor="#ec4899"; clock.style.boxShadow="0 0 30px #ec4899"; }},
-    {name:"Чорний мінімал", style:()=>{ clock.style.borderColor="#222"; clock.style.boxShadow="none"; }},
+  // Skins (clock border / glow), hands skins, shape skins
+  const clockSkins = [
+    {name:"Неон синій", apply: ()=> { clock.style.borderColor="#0ea5e9"; clock.style.boxShadow="0 0 30px #0ea5e9"; }},
+    {name:"Пурпурний", apply: ()=> { clock.style.borderColor="#8b5cf6"; clock.style.boxShadow="0 0 30px #8b5cf6"; }},
+    {name:"Рожевий", apply: ()=> { clock.style.borderColor="#ec4899"; clock.style.boxShadow="0 0 30px #ec4899"; }},
+    {name:"Чорний мінімал", apply: ()=> { clock.style.borderColor="#222"; clock.style.boxShadow="none"; }},
   ];
-
-  // --- ADD: click-effect skins
-  const clickEffects = [
-    { id: 'red', name: 'Червоний спалах' },
-    { id: 'blue', name: 'Синій електро' },
-    { id: 'glitch', name: 'Глітч' },
-    { id: 'blackhole', name: 'Чорна діра' },
-    { id: 'ripple', name: 'Хвиля часу' }
-  ];
-
-  // --- ADD: hand skins
   const handSkins = [
-    { id: 'dark', name: 'Темно-сині', class: 'skin-dark' },
-    { id: 'neon', name: 'Неонові', class: 'skin-neon' },
-    { id: 'pixel', name: 'Піксельні', class: 'skin-pixel' },
-    { id: 'chrome', name: 'Хромовані', class: 'skin-chrome' },
-    { id: 'glow', name: 'Прозорі (з підсвіткою)', class: 'skin-glow' },
+    {name:"Темно-сині", apply: ()=> { hourHand.style.background="#001f5f"; minuteHand.style.background="#001f5f"; }},
+    {name:"Неон", apply: ()=> { hourHand.style.background="#0ea5e9"; minuteHand.style.background="#0ea5e9"; }},
+    {name:"Піксельні", apply: ()=> { hourHand.style.background="#d1d1d1"; minuteHand.style.background="#d1d1d1"; }},
+    {name:"Хром", apply: ()=> { hourHand.style.background="linear-gradient(180deg,#fff,#bbb)"; minuteHand.style.background="linear-gradient(180deg,#fff,#bbb)"; }},
+    {name:"Прозорі", apply: ()=> { hourHand.style.background="rgba(255,255,255,0.06)"; minuteHand.style.background="rgba(255,255,255,0.06)"; }},
   ];
 
-  // render skins UI: we append sections inside #skins root
-  (function renderSkinsUI(){
-    skinsRoot.innerHTML = ''; // clear (in case)
-    const sectionA = document.createElement("div");
-    sectionA.className = "skins-section";
-    sectionA.innerHTML = `<h4>Скіни годинника</h4>`;
-    skins.forEach((s, i) => {
-      const el = document.createElement("div");
-      el.className = "skin";
-      el.textContent = s.name;
-      el.onclick = ()=> {
-        // unselect others
-        Array.from(sectionA.querySelectorAll('.skin')).forEach(x=>x.classList.remove('active'));
-        el.classList.add("active");
-        s.style();
-      };
-      if(i===0) el.classList.add("active");
-      sectionA.appendChild(el);
+  // Render skins UI (simple — reuses #skins area)
+  function renderSkins(){
+    skinsRoot.innerHTML = "";
+    clockSkins.forEach((s,i)=> {
+      const el = document.createElement("div"); el.className="skin"; el.textContent = s.name;
+      el.onclick = ()=> { clockSkins.forEach(()=>{}); s.apply(); Array.from(skinsRoot.children).forEach(c=>c.classList.remove("active")); el.classList.add("active"); };
+      skinsRoot.appendChild(el);
+      if(i===0) { el.classList.add("active"); s.apply(); }
     });
-    skinsRoot.appendChild(sectionA);
-
-    // click effects
-    const sectionB = document.createElement("div");
-    sectionB.className = "skins-section";
-    sectionB.innerHTML = `<h4>Ефект при кліку</h4>`;
-    clickEffects.forEach((e,i)=>{
-      const b = document.createElement("div");
-      b.className = "skin";
-      b.textContent = e.name;
-      b.onclick = ()=> {
-        Array.from(sectionB.querySelectorAll('.skin')).forEach(x=>x.classList.remove('active'));
-        b.classList.add("active");
-        currentClickEffect = e.id;
-      };
-      if(i===0) b.classList.add("active");
-      sectionB.appendChild(b);
+    // add click-anim skins selector + hand skins
+    const header = document.createElement("h4"); header.textContent="Анімації кліку"; header.style.marginTop="10px";
+    skinsRoot.appendChild(header);
+    clickSkins.forEach((s,i)=> {
+      const el = document.createElement("div"); el.className="skin"; el.textContent = `Анім ${i+1}`; el.onclick = ()=> { currentClickSkin = i; Array.from(skinsRoot.querySelectorAll(".skin")).forEach(c=>c.classList.remove("sel")); el.classList.add("sel"); };
+      skinsRoot.appendChild(el);
+      if(i===0) el.classList.add("sel");
     });
-    skinsRoot.appendChild(sectionB);
-
-    // hand skins
-    const sectionC = document.createElement("div");
-    sectionC.className = "skins-section";
-    sectionC.innerHTML = `<h4>Скіни стрілок</h4>`;
-    handSkins.forEach((h,i)=>{
-      const b = document.createElement("div");
-      b.className = "skin";
-      b.textContent = h.name;
-      b.onclick = ()=> {
-        Array.from(sectionC.querySelectorAll('.skin')).forEach(x=>x.classList.remove('active'));
-        b.classList.add("active");
-        // apply class to hands
-        [hourHand, minuteHand, secondHand].forEach(hand=>{
-          hand.classList.remove('skin-dark','skin-neon','skin-pixel','skin-chrome','skin-glow');
-          hand.classList.add(h.class);
-        });
-      };
-      if(i===0) b.classList.add("active");
-      sectionC.appendChild(b);
+    const header2 = document.createElement("h4"); header2.textContent="Стрілки"; header2.style.marginTop="10px";
+    skinsRoot.appendChild(header2);
+    handSkins.forEach((s,i)=>{
+      const el = document.createElement("div"); el.className="skin"; el.textContent = s.name; el.onclick = ()=> { s.apply(); Array.from(skinsRoot.querySelectorAll(".skin")).forEach(c=>c.classList.remove("sel2")); el.classList.add("sel2"); };
+      skinsRoot.appendChild(el);
+      if(i===0) { el.classList.add("sel2"); s.apply(); }
     });
-    skinsRoot.appendChild(sectionC);
-  })();
+  }
+  renderSkins();
 
-  // Achievements (simple examples) + progress
+  // Achievements + toasts
   const achievementsList = [
-    {id:"ach1", title:"Перший клік", desc:"Зробити перший клік", check: ()=> clickCloudTotal >= 1, target:1},
-    {id:"ach2", title:"100 сек", desc:"Витратити 100 сек", check: ()=> clickCloudTotal >= 100, target:100},
-    {id:"ach3", title:"Перша покупка", desc:"Купити перший апгрейд", check: ()=> totalUpgradesBought >= 1, target:1},
-    {id:"ach4", title:"Авто запущено", desc:"Маєш autoRate > 0", check: ()=> autoRate > 0, target:1},
+    {id:"ach1", title:"Перший клік", desc:"Зробити перший клік", check: ()=> clickCloudTotal >= 1},
+    {id:"ach2", title:"100 сек", desc:"Витратити 100 сек", check: ()=> clickCloudTotal >= 100},
+    {id:"ach3", title:"Перша покупка", desc:"Купити перший апгрейд", check: ()=> totalUpgradesBought >= 1},
+    {id:"ach4", title:"Авто запущено", desc:"Маєш autoRate > 0", check: ()=> autoRate > 0},
   ];
-
-  achievementsList.forEach(a => {
-    const el = document.createElement("div");
-    el.className = "achievement";
-    el.id = a.id;
-    el.innerHTML = `<strong>${a.title}</strong>
-      <div style="font-size:12px;color:#bcd">${a.desc}</div>
-      <div class="ach-state" style="margin-top:8px;color:#ffd">Стан: Чекає</div>
-      <div class="progress">Прогрес: <span class="prog-value">0</span> / ${a.target}</div>
-      <div class="progress-bar"><i style="width:0%"></i></div>
-    `;
+  achievementsList.forEach(a=>{
+    const el = document.createElement("div"); el.className="achievement"; el.id=a.id;
+    el.innerHTML = `<strong>${a.title}</strong><div style="font-size:12px;color:#bcd">${a.desc}</div><div class="ach-state" style="margin-top:8px;color:#ffd">Стан: Чекає</div><div class="progress" data-target="0"></div>`;
     achRoot.appendChild(el);
   });
 
   function updateAchievements(){
-    achievementsList.forEach(a => {
+    achievementsList.forEach(a=>{
       const el = document.getElementById(a.id);
       const state = el.querySelector(".ach-state");
-      // calculate progress number (simple)
-      let cur = 0;
-      if(a.id === 'ach1') cur = Math.min(clickCloudTotal, a.target);
-      else if(a.id === 'ach2') cur = Math.min(clickCloudTotal, a.target);
-      else if(a.id === 'ach3') cur = Math.min(totalUpgradesBought, a.target);
-      else if(a.id === 'ach4') cur = autoRate > 0 ? a.target : 0;
-      const pct = Math.min(100, Math.round((cur / a.target) * 100));
-      el.querySelector('.prog-value').textContent = cur;
-      el.querySelector('.progress-bar > i').style.width = `${pct}%`;
-
-      if(a.check()){
-        if(!el.dataset.done){
-          // just unlocked
-          el.dataset.done = '1';
-          state.textContent = "Пройдено ✅";
-          state.style.color = "#8df299";
-          // toast
-          showToast(`Досягнення: ${a.title} отримано!`);
-        } else {
-          state.textContent = "Пройдено ✅";
-          state.style.color = "#8df299";
-        }
-      } else {
-        state.textContent = "Чекає";
-        state.style.color = "#ffd";
-      }
+      if(a.check()){ state.textContent = "Пройдено ✅"; state.style.color = "#8df299"; }
+      else { state.textContent = "Чекає"; state.style.color = "#ffd"; }
+      // example progress: set data-target for display (simple)
+      const prog = el.querySelector(".progress");
+      if(a.id==="ach2"){ // example progress: toward 100
+        const cur = Math.min(100, Math.floor(clickCloudTotal));
+        prog.textContent = `Прогрес: ${cur}/100 сек`;
+      } else prog.textContent = "";
     });
   }
 
-  // Reverb (prestige) — animation + reset
+  // Toast system (bottom)
+  const toastRoot = document.createElement("div");
+  toastRoot.id = "toastRoot";
+  document.body.appendChild(toastRoot);
+  function showToast(text, duration=3000){
+    const t = document.createElement("div"); t.className = "toast"; t.textContent = text;
+    toastRoot.appendChild(t);
+    requestAnimationFrame(()=> t.classList.add("visible"));
+    setTimeout(()=> { t.classList.remove("visible"); setTimeout(()=> t.remove(), 300); }, duration);
+  }
+
+  // Grant achievement (id) and show toast
+  const achieved = new Set();
+  function grantAchievement(id){
+    if(achieved.has(id)) return;
+    achieved.add(id);
+    const a = achievementsList.find(x=>x.id===id);
+    if(a) showToast(`Ви отримали досягнення: ${a.title}`, 3500);
+    updateAchievements();
+  }
+
+  // Reverb (prestige)
   reverbBtn.addEventListener("click", ()=>{
-    // animation
     timeTunnel.classList.add("active");
     setTimeout(()=> {
       timeTunnel.classList.remove("active");
-      // apply prestige: multiply multiplier by 1.2 and reset progress
       prestigeMultiplier *= 1.2;
-      // reset basics
-      score = 0;
-      clickPower = 1;
-      autoRate = 0;
-      totalUpgradesBought = 0;
-      maxPerClick = 1;
-      // reset upgrades levels
-      upgrades.forEach((u, idx)=> {
-        u.level = 0;
-        if(buttons[idx]) buttons[idx].classList.add("hidden");
-        // reveal first again
-        if(idx===0 && buttons[0]) buttons[0].classList.remove("hidden");
-        u.update();
-      });
-      updateScore();
-      updateStats();
-      updateAchievements();
-      showToast(`Реверб завершено. Новий множник: ${prestigeMultiplier.toFixed(2)}×`, 3000);
-    }, 1200);
+      score = 0; clickPower = 1; autoRate = 0; totalUpgradesBought = 0; maxPerClick = 1;
+      upgrades.forEach((u, idx)=> { u.level = 0; if(buttons[idx]) buttons[idx].classList.add("hidden"); if(idx===0 && buttons[0]) buttons[0].classList.remove("hidden"); u.update(); });
+      updateScore(); updateStats(); updateAchievements();
+      showToast(`Реверб завершено. Новий множник: ${prestigeMultiplier.toFixed(2)}×`, 3500);
+    }, 1100);
   });
 
   // Tabs switching
@@ -542,22 +393,22 @@ window.onload = function () {
     });
   });
 
-  // periodic UI updates
-  setInterval(()=>{
-    updateScore();
-    updateStats();
-    updateAchievements();
-  }, 1000);
-
-  // prevent Enter in title and auto append "Time" on blur
+  // Prevent Enter in title & append "Time" on blur
   if(worldTitle){
     worldTitle.addEventListener("keydown", (e)=>{ if(e.key==="Enter") e.preventDefault(); });
-    worldTitle.addEventListener("blur", ()=>{
-      let t = worldTitle.textContent.trim();
-      if(!t) worldTitle.textContent = "Times Clicker";
-      else if(!/(\bTime)$/i.test(t)) worldTitle.textContent = `${t} Time`;
-    });
+    worldTitle.addEventListener("blur", ()=>{ let t = worldTitle.textContent.trim(); if(!t) worldTitle.textContent = "Times Clicker"; else if(!/(\bTime)$/i.test(t)) worldTitle.textContent = `${t} Time`; });
   }
+
+  // Button hover/active animations (simple: add classes on hover via JS to ensure effect)
+  [musicBtn, prevTrack, nextTrack].forEach(b=>{
+    b.addEventListener("mouseenter", ()=> b.classList.add("btn-hover"));
+    b.addEventListener("mouseleave", ()=> b.classList.remove("btn-hover"));
+    b.addEventListener("mousedown", ()=> b.classList.add("btn-active"));
+    b.addEventListener("mouseup", ()=> b.classList.remove("btn-active"));
+  });
+
+  // periodic UI updates
+  setInterval(()=>{ updateScore(); updateStats(); updateAchievements(); }, 1000);
 
   // initial UI refresh
   updateScore(); updateStats(); updateAchievements();
