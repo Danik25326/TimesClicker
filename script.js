@@ -154,12 +154,17 @@ window.onload = function () {
     score -= cost;
     up.level++;
     totalUpgradesBought++;
+
     if(up.type === "click"){
       clickPower += Math.round(up.bonus * prestigeMultiplier);
       if(clickPower > maxPerClick) maxPerClick = clickPower;
     } else {
       autoRate += Math.round(up.bonus * prestigeMultiplier);
     }
+
+    // ← НОВА ФІШКА: тост при покупці
+    showToast(`Куплено: ${up.name} (Lv.${up.level}) ✅`);
+
     revealNext();
     up.update();
     updateAllButtons();
@@ -260,8 +265,10 @@ window.onload = function () {
     const t = document.createElement("div");
     t.className = "toast";
     t.textContent = text;
+    t.style.fontSize = "16px";          // трошки більший текст
+    t.style.padding = "18px 36px";      // більше місця
     toastContainer.appendChild(t);
-    setTimeout(() => t.remove(), 3500);
+    setTimeout(() => t.remove(), 6000); // 6 секунд замість 3.5
   }
 
   // === КЛІК ===
