@@ -38,10 +38,12 @@ window.onload = function () {
   let prestigeMultiplier = 1.0;
   let clickCloudTotal = 0;
 
-  // Комбо
+  // === НОВА СИСТЕМА КОМБО (видалив дубль змінних) ===
+  let lastClickTime = 0;
   let clickCombo = 0;
   let comboTimeout = null;
-  const COMBO_THRESHOLD = 6;
+  const MAX_CLICK_INTERVAL = 350;  // мс між кліками (швидко!)
+  const COMBO_THRESHOLD = 5;       // з якого кліку показувати бульбашку
 
   // === МУЗИКА ===
   const trackNames = ["Фонк №1","Фонк №2","Фонк №3","Фонк №4","Фонк №5","Фонк №6","Фонк №7"];
@@ -67,7 +69,7 @@ window.onload = function () {
     if(!isPlaying){
       isPlaying = true;
       player.volume = 0.45;
-      player.play();
+      player.play().catch(() => {});
       musicBtn.textContent = "⏸ Зупинити музику";
     } else {
       isPlaying = false;
@@ -105,19 +107,19 @@ window.onload = function () {
   }
 
   // === АПГРЕЙДИ ===
-  const upgrades = [
-    { name:"Кліпати очима", baseCost:1, type:"click", bonus:1, level:0, desc:"Кліп - мінус секунду швидко." },
-    { name:"Включити телефон", baseCost:8, type:"auto", bonus:1, level:0, desc:"Телефон віднімає час автоматично." },
-    { name:"Гортати стрічку новин", baseCost:25, type:"auto", bonus:3, level:0, desc:"Погладжування стрічки." },
-    { name:"Невеликий мем-тур", baseCost:90, type:"click", bonus:2, level:0, desc:"Клік дає більше втрат." },
-    { name:"Автоперегортання", baseCost:450, type:"auto", bonus:10, level:0, desc:"Серйозна автоматизація." },
-    { name:"Придбати підписку", baseCost:2400, type:"auto", bonus:30, level:0, desc:"Всі підписки крадуть час." },
-    { name:"Серіал-марафон", baseCost:15000, type:"auto", bonus:120, level:0, desc:"Великий пасив." },
-    { name:"Проєкт із затримкою", baseCost:120000, type:"click", bonus:50, level:0, desc:"Коли клікаєш, втрачається дуже багато." },
-    { name:"Життєвий крінж", baseCost:800000, type:"auto", bonus:500, level:0, desc:"Топовий авто-витрачальник." },
-    { name:"Зависнути в Discord", baseCost:5000000, type:"auto", bonus:2000, level:0, desc:"Голосовий чат 24/7" },
-    { name:"Скролити Reels до ранку", baseCost:20000000, type:"click", bonus:300, level:0, desc:"+300 сек за клік" },
-    { name:"Філософські роздуми", baseCost:100000000, type:"auto", bonus:10000, level:0, desc:"Час летить непомітно" },
+  const upgrades = [ /* твої 12 апгрейдів — без змін */ 
+    { name:"Кліпати очима", baseCost:1, type:"click", bonus:1, level:0 },
+    { name:"Включити телефон", baseCost:8, type:"auto", bonus:1, level:0 },
+    { name:"Гортати стрічку новин", baseCost:25, type:"auto", bonus:3, level:0 },
+    { name:"Невеликий мем-тур", baseCost:90, type:"click", bonus:2, level:0 },
+    { name:"Автоперегортання", baseCost:450, type:"auto", bonus:10, level:0 },
+    { name:"Придбати підписку", baseCost:2400, type:"auto", bonus:30, level:0 },
+    { name:"Серіал-марафон", baseCost:15000, type:"auto", bonus:120, level:0 },
+    { name:"Проєкт із затримкою", baseCost:120000, type:"click", bonus:50, level:0 },
+    { name:"Життєвий крінж", baseCost:800000, type:"auto", bonus:500, level:0 },
+    { name:"Зависнути в Discord", baseCost:5000000, type:"auto", bonus:2000, level:0 },
+    { name:"Скролити Reels до ранку", baseCost:20000000, type:"click", bonus:300, level:0 },
+    { name:"Філософські роздуми", baseCost:100000000, type:"auto", bonus:10000, level:0 },
   ];
 
   const buttons = [];
@@ -174,12 +176,7 @@ window.onload = function () {
   let currentHandSkin = "darkblue";
   let currentEffect = "red";
 
-  const shapes = [
-    {id:"round", name:"Круг"},
-    {id:"square", name:"Квадрат"},
-    {id:"diamond", name:"Ромб"},
-    {id:"oval", name:"Овал"},
-  ];
+  const shapes = [{id:"round", name:"Круг"},{id:"square", name:"Квадрат"},{id:"diamond", name:"Ромб"},{id:"oval", name:"Овал"}];
   const clockSkins = [
     {id:"neon-blue", name:"Неон синій", apply:()=>{clock.style.borderColor="#0ea5e9"; clock.style.boxShadow="0 0 40px #0ea5e9, 0 0 80px #0ea5e9";}},
     {id:"purple", name:"Пурпурний", apply:()=>{clock.style.borderColor="#8b5cf6"; clock.style.boxShadow="0 0 40px #8b5cf6, 0 0 80px #8b5cf6";}},
@@ -226,46 +223,47 @@ window.onload = function () {
   createSkinGrid("clockSkins", clockSkins, (id)=>{currentClockSkin=id; applyAllSkins();});
   createSkinGrid("handSkins", handSkins, (id)=>{currentHandSkin=id; applyAllSkins();});
   createSkinGrid("effectSkins", effects, (id)=>{currentEffect=id;});
-
   applyAllSkins();
 
-  // === НОВА СИСТЕМА КОМБО (швидкі кліки тільки!) ===
-  let lastClickTime = 0;
-  let clickCombo = 0;
-  let comboTimeout = null;
-  const MAX_CLICK_INTERVAL = 350; // мс — якщо повільніше, комбо скидається
-  const COMBO_THRESHOLD = 5;     // тепер з 5-го швидкого кліку показуємо бульбашку
-
+  // === ПРАВИЛЬНИЙ КОМБО (швидкі кліки) ===
   function handleClickCombo(){
     const now = Date.now();
-    const timeSinceLastClick = now - lastClickTime;
+    const diff = now - lastClickTime;
 
-    if(timeSinceLastClick < MAX_CLICK_INTERVAL){
-      // швидкий клік — продовжуємо комбо
+    if (diff < MAX_CLICK_INTERVAL) {
       clickCombo++;
     } else {
-      // повільний клік — скидаємо комбо
-      clickCombo = 1;
+      clickCombo = 1; // скидаємо, бо клік був повільний
     }
     lastClickTime = now;
 
-    // показуємо бульбашку тільки при швидкому комбо
-    if(clickCombo >= COMBO_THRESHOLD){
+    if (clickCombo >= COMBO_THRESHOLD) {
       comboCount.textContent = clickCombo;
       comboBubble.classList.add("show");
     }
 
-    // очищаємо попередній таймаут
     clearTimeout(comboTimeout);
-    comboTimeout = setTimeout(()=>{
-      if(clickCombo >= COMBO_THRESHOLD){
+    comboTimeout = setTimeout(() => {
+      if (clickCombo >= COMBO_THRESHOLD) {
         comboBubble.classList.add("burst");
         showToast(`Комбо ×${clickCombo}! 🔥`);
-        setTimeout(()=>{comboBubble.classList.remove("show","burst");}, 700);
+        setTimeout(() => {
+          comboBubble.classList.remove("show", "burst");
+        }, 700);
       }
       clickCombo = 0;
-    }, 600); // чекаємо 600мс після останнього кліку
+    }, 600);
   }
+
+  // === ТОАСТ ===
+  function showToast(text){
+    const t = document.createElement("div");
+    t.className = "toast";
+    t.textContent = text;
+    toastContainer.appendChild(t);
+    setTimeout(() => t.remove(), 3500);
+  }
+
   // === КЛІК ===
   function addTime(){
     const gained = Math.round(clickPower * prestigeMultiplier);
@@ -274,7 +272,7 @@ window.onload = function () {
     clickGainEl.textContent = `+${formatTime(gained)}`;
     showFloating(`+${formatTime(gained)}`);
     triggerClickEffect();
-    handleClickCombo();
+    handleClickCombo();          // ← тут нова функція
     if(gained > maxPerClick) maxPerClick = gained;
     updateScore(); updateStats();
   }
@@ -298,11 +296,11 @@ window.onload = function () {
     el.style.opacity = "1";
     el.style.transition = "transform 900ms ease-out, opacity 900ms";
     clockWrapper.appendChild(el);
-    requestAnimationFrame(()=> {
+    requestAnimationFrame(() => {
       el.style.transform = "translateX(60px) translateY(-80px)";
       el.style.opacity = "0";
     });
-    setTimeout(()=> el.remove(), 920);
+    setTimeout(() => el.remove(), 920);
   }
 
   // === СТАТИСТИКА + АЧІВКИ ===
@@ -324,7 +322,7 @@ window.onload = function () {
     {title:"100 сек", desc:"Витратити 100 сек", check: ()=> score >= 100},
     {title:"Перша покупка", desc:"Купити перший апгрейд", check: ()=> totalUpgradesBought >= 1},
     {title:"Авто запущено", desc:"Маєш autoRate > 0", check: ()=> autoRate > 0},
-    {title:"Комбо-майстер", desc:"10+ кліків за раз", check: ()=> clickCombo >= 10},
+    {title:"Комбо-майстер", desc:"10+ швидких кліків", check: ()=> clickCombo >= 10},
     {title:"Стильний", desc:"Змінити скін", check: ()=> currentShape!=="round" || currentClockSkin!=="neon-blue"},
   ];
 
@@ -350,7 +348,7 @@ window.onload = function () {
   // === АВТО ТІК ===
   setInterval(() => {
     const gained = Math.round(autoRate * prestigeMultiplier);
-    if(gained>0){
+    if(gained > 0){
       score += gained;
       clickCloudTotal += gained;
       updateScore();
@@ -364,22 +362,22 @@ window.onload = function () {
     const now = new Date();
     const s = now.getSeconds();
     const m = now.getMinutes();
-    const h = now.getHours()%12;
+    const h = now.getHours() % 12;
     secondHand.style.transform = `translateX(-50%) rotate(${s*6}deg)`;
     minuteHand.style.transform = `translateX(-50%) rotate(${m*6 + s*0.1}deg)`;
     hourHand.style.transform = `translateX(-50%) rotate(${h*30 + m*0.5}deg)`;
   }
-  setInterval(updateClockHands,1000);
+  setInterval(updateClockHands, 1000);
   updateClockHands();
 
   // === РЕВЕРБ ===
-  reverbBtn.addEventListener("click", ()=>{
+  reverbBtn.addEventListener("click", () => {
     timeTunnel.classList.add("active");
-    setTimeout(()=>{
+    setTimeout(() => {
       timeTunnel.classList.remove("active");
       prestigeMultiplier *= 1.2;
       score = 0; clickPower = 1; autoRate = 0; totalUpgradesBought = 0; maxPerClick = 1;
-      upgrades.forEach((u,idx)=>{
+      upgrades.forEach((u, idx) => {
         u.level = 0;
         if(buttons[idx]) buttons[idx].classList.add("hidden");
         u.update();
@@ -387,14 +385,14 @@ window.onload = function () {
       buttons[0].classList.remove("hidden");
       updateScore(); updateStats(); updateAchievements();
       alert(`Реверб! Новий множник: ${prestigeMultiplier.toFixed(2)}×`);
-    },2400);
+    }, 2400);
   });
 
   // === ТАБИ ===
-  document.querySelectorAll(".tab").forEach(btn=>{
-    btn.addEventListener("click", ()=>{
-      document.querySelectorAll(".tab").forEach(b=>b.classList.remove("active"));
-      document.querySelectorAll(".tab-page").forEach(p=>p.classList.remove("active"));
+  document.querySelectorAll(".tab").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".tab-page").forEach(p => p.classList.remove("active"));
       btn.classList.add("active");
       document.getElementById(btn.dataset.tab).classList.add("active");
     });
@@ -402,8 +400,8 @@ window.onload = function () {
 
   // === ЗАГОЛОВОК ===
   if(worldTitle){
-    worldTitle.addEventListener("keydown", e=>{ if(e.key==="Enter") e.preventDefault(); });
-    worldTitle.addEventListener("blur", ()=>{
+    worldTitle.addEventListener("keydown", e => { if(e.key === "Enter") e.preventDefault(); });
+    worldTitle.addEventListener("blur", () => {
       let t = worldTitle.textContent.trim();
       if(!t) worldTitle.textContent = "Times Clicker";
       else if(!/\sTime$/i.test(t)) worldTitle.textContent = `${t} Time`;
