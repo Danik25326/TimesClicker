@@ -7,6 +7,11 @@ window.onload = () => {
   const revBtn = $("reverbBtn"), revOv = $("reverbOverlay"), revClk = $("reverbClock"), revHint = $("reverbHint");
   const tunnel = $("timeTunnel"), toastCont = $("toastContainer"), title = $("worldTitle");
 
+  // Стрілки (головне — вони визначені!)
+  const hourHand = document.querySelector(".hour");
+  const minuteHand = document.querySelector(".minute");
+  const secondHand = document.querySelector(".second");
+
   // State
   let s = 0, cp = 1, ar = 0, pr = 1, ct = 0, bought = 0, mc = 1;
   let cc = 0, mx = 0, lc = 0, ctimer = null;
@@ -47,7 +52,7 @@ window.onload = () => {
     u.upd(); return b;
   });
   const reveal=()=>{const c=ups.filter(u=>u.l).length; bs[c]&&bs[c].classList.remove("hidden")};
-   const buy=i=>{
+  const buy=i=>{
     const u=ups[i], c=u.cost(); if(s<c)return;
     s-=c; u.l++; bought++;
     u.t==="click"?cp+=Math.round(u.b*pr):ar+=Math.round(u.b*pr);
@@ -67,7 +72,7 @@ window.onload = () => {
     const id=t+"Skins", list=t==="shape"?[{id:"round",name:"Круг"},{id:"square",name:"Квадрат"},{id:"diamond",name:"Ромб"},{id:"oval",name:"Овал"}]:
       t==="clock"?[{id:"neon-blue",name:"Неон синій"},{id:"purple",name:"Пурпурний"},{id:"pink",name:"Рожевий"},{id:"black",name:"Чорний"}]:
       t==="hand"?[{id:"darkblue",name:"Темно-сині"},{id:"neon",name:"Неонові"},{id:"pixel",name:"Піксельні"},{id:"chrome",name:"Хром"}]:
-      [{id:"red",name:"Червоний"},{id:"blue",name:"Синій"},{id:"glitch",name:"Глітч"},{id:"blackhole",name:"Чорна діра"},{id:"ripple",name:"Хвиля часу"}];
+      [{id:"red",name:"Червоний спалах"},{id:"blue",name:"Синій вибух"},{id:"glitch",name:"Глітч"},{id:"blackhole",name:"Чорна діра"},{id:"ripple",name:"Хвиля часу"}];
     list.forEach((sk,j)=>{
       const el=document.createElement("div"); el.className="skin"+(!j?" active":""); el.textContent=sk.name;
       el.onclick=()=>{$(id).querySelectorAll(".skin").forEach(e=>e.classList.remove("active"));el.classList.add("active");
@@ -136,7 +141,7 @@ window.onload = () => {
     else if(p<100)el.st.textContent=Math.floor(p)+"%";
   });
 
-  // Авто + реальний час
+  // Авто + час
   setInterval(()=>{const g=Math.round(ar*pr);if(g){s+=g;ct+=g;scoreEl.textContent=`Часу витрачено: ${fmt(s)}`;totalEl.textContent=fmt(ct)} updateStats();updateAch()},1000);
   setInterval(()=>{const n=new Date();secondHand.style.transform=`translateX(-50%) rotate(${n.getSeconds()*6}deg)`;
     minuteHand.style.transform=`translateX(-50%) rotate(${n.getMinutes()*6+n.getSeconds()*0.1}deg)`;
@@ -172,5 +177,5 @@ window.onload = () => {
   title&&(title.onblur=()=>{let t=title.textContent.trim();title.textContent=t?t+(/\sTime$/i.test(t)?"":" Time"):"Times Clicker"});
 
   // Старт
-  scoreEl.textContent=`Часу витрачено: 0 сек`; totalEl.textContent="0 сек"; updateStats(); updateAch();
+  scoreEl.textContent="Часу витрачено: 0 сек"; totalEl.textContent="0 сек"; updateStats(); updateAch();
 };
