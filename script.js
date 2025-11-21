@@ -10,7 +10,7 @@ window.onload = function () {
   const player = document.getElementById("player");
   const scoreText = document.getElementById("score");
   const upgradesContainer = document.getElementById("upgrades");
-  const multipliersContainer = document.getElementById("multipliers"); // ← ДОДАНО
+  const multipliersContainer = document.getElementById("multipliers");
   const clickGainEl = document.getElementById("clickGain");
   const cloudTotalEl = document.getElementById("cloudTotal");
   const nowPlaying = document.getElementById("nowPlaying");
@@ -34,7 +34,7 @@ window.onload = function () {
   let isPlaying = false;
   let currentTrack = 0;
   let sessionStart = Date.now();
-  let totalUpgradesBought = 0; // ← ВИПРАВЛЕНО
+  let totalUpgradesBought = 0;
   let maxPerClick = 1;
   let prestigeMultiplier = 1.0;
   let clickCloudTotal = 0;
@@ -50,9 +50,9 @@ window.onload = function () {
   let currentClockSkin = "neon-blue";
   let currentHandSkin = "darkblue";
   let currentEffect = "red";
-  let clickMultiplier = 1; // ← ДОДАНО
+  let clickMultiplier = 1;
 
-  const buttons = []; // ← ДОДАНО! Критична змінна
+  const buttons = [];
 
   // === МУЗИКА ===
   const trackNames = ["Фонк №1","Фонк №2","Фонк №3","Фонк №4","Фонк №5","Фонк №6","Фонк №7"];
@@ -112,7 +112,7 @@ window.onload = function () {
     return parts.length ? parts.join(" ") : `${seconds} сек`;
   }
 
-  // === АПГРЕЙДИ (ФІБОНАЧЧІ + КУМУЛЯТИВНИЙ РІСТ) ===
+  // === АПГРЕЙДИ ===
   const upgrades = [
     { name:"Кліпати очима", baseCost:1, level:0 },
     { name:"Включити телефон", baseCost:8, level:0 },
@@ -174,8 +174,12 @@ window.onload = function () {
     up.update();
     updateAllButtons();
     updateScore(); updateStats(); updateAchievements();
-    document.body.classList.add("blink");
-    setTimeout(() => document.body.classList.remove("blink"), 200);
+
+    // Анімація заплющення очей — ТІЛЬКИ для "Кліпати очима"
+    if (up.name === "Кліпати очима") {
+      document.body.classList.add("eye-blink");
+      setTimeout(() => document.body.classList.remove("eye-blink"), 1000);
+    }
   }
 
   function updateAllButtons(){
@@ -196,7 +200,6 @@ window.onload = function () {
     btn.className = "upgrade-btn multiplier-btn";
     btn.innerHTML = `${m.name}<span>${formatTime(m.cost)}</span>`;
     multipliersContainer.appendChild(btn);
-
     btn.addEventListener("click", () => {
       if (score < m.cost) return;
       score -= m.cost;
@@ -205,12 +208,10 @@ window.onload = function () {
       btn.innerHTML = `${m.name} (активно)`;
       btn.disabled = true;
       showToast(`Активовано: ${m.name}!`);
-      document.body.classList.add("blink");
-      setTimeout(() => document.body.classList.remove("blink"), 200);
     });
   });
 
-  // === КЛІК (з множником) ===
+  // === КЛІК ===
   function addTime(){
     const gained = Math.round(clickMultiplier * prestigeMultiplier);
     score += gained;
@@ -222,7 +223,6 @@ window.onload = function () {
     if(gained > maxPerClick) maxPerClick = gained;
     updateScore(); updateStats();
   }
-
   // === СКІНИ ===
   const shapes = [{id:"round", name:"Круг"},{id:"square", name:"Квадрат"},{id:"diamond", name:"Ромб"},{id:"oval", name:"Овал"}];
   const clockSkins = [
