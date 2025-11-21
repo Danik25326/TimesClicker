@@ -33,7 +33,7 @@ window.onload = function () {
   let isPlaying = false;
   let currentTrack = 0;
   let sessionStart = Date.now();
-  let totalUpgradesBought = 0;
+  let totalBought = 0;
   let maxPerClick = 1;
   let prestigeMultiplier = 1.0;
   let clickCloudTotal = 0;
@@ -107,7 +107,6 @@ window.onload = function () {
     return parts.length ? parts.join(" ") : `${seconds} сек`;
   }
 
-  // === АПГРЕЙДИ ===
 // === НОВІ АПГРЕЙДИ — ФІБОНАЧЧІ + КУМУЛЯТИВНИЙ ЗРІСТ ===
 const upgrades = [
   { name:"Кліпати очима", baseCost:1, level:0 },
@@ -179,6 +178,36 @@ function buyUpgrade(i){
   function updateAllButtons(){
     upgrades.forEach(up => up.update());
   }
+  // Множники кліку (окремий список)
+const multipliers = [
+  { name:"Подвійний клік", cost:5000, mult:2, level:0 },
+  { name:"Потрійний клік", cost:50000, mult:3, level:0 },
+  { name:"x10 за клік", cost:1000000, mult:10, level:0 },
+  { name:"x50 за клік", cost:20000000, mult:50, level:0 },
+  { name:"x100 за клік", cost:100000000, mult:100, level:0 },
+];
+
+let clickMultiplier = 1; // глобальний множник кліку
+
+// Створюємо кнопки множників
+multipliers.forEach((m, idx) => {
+  const btn = document.createElement("button");
+  btn.className = "upgrade-btn multiplier-btn";
+  btn.innerHTML = `${m.name}<span>${formatTime(m.cost)}</span>`;
+  document.getElementById("multipliers").appendChild(btn);
+
+  btn.addEventListener("click", () => {
+    if (score < m.cost) return;
+    score -= m.cost;
+    m.level++;
+    clickMultiplier = m.mult;
+    btn.innerHTML = `${m.name} (активно)`;
+    btn.disabled = true;
+    showToast(`Активовано: ${m.name}!`);
+    document.body.classList.add("blink");
+    setTimeout(() => document.body.classList.remove("blink"), 200);
+  });
+});
 
   // === СКІНИ ===
   const shapes = [{id:"round", name:"Круг"},{id:"square", name:"Квадрат"},{id:"diamond", name:"Ромб"},{id:"oval", name:"Овал"}];
