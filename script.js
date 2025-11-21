@@ -280,7 +280,7 @@ window.onload = function () {
   function addTime(){
     const gained = Math.round(clickPower * prestigeMultiplier);
     score += gained;
-    clickCloudCloudTotal += gained;
+    clickCloudTotal += gained;
     clickGainEl.textContent = `+${formatTime(gained)}`;
     showFloating(`+${formatTime(gained)}`);
     triggerClickEffect();
