@@ -270,17 +270,17 @@ function buyUpgrade(i){
   }
 
   // === КЛІК ===
-  function addTime(){
-    const gained = Math.round(clickPower * prestigeMultiplier);
-    score += gained;
-    clickCloudTotal += gained;
-    clickGainEl.textContent = `+${formatTime(gained)}`;
-    showFloating(`+${formatTime(gained)}`);
-    triggerClickEffect();
-    handleClickCombo();
-    if(gained > maxPerClick) maxPerClick = gained;
-    updateScore(); updateStats();
-  }
+function addTime(){
+  const gained = Math.round(1 * prestigeMultiplier); // завжди +1 сек за клік
+  score += gained;
+  clickCloudTotal += gained;
+  clickGainEl.textContent = `+${formatTime(gained)}`;
+  showFloating(`+${formatTime(gained)}`);
+  triggerClickEffect();
+  handleClickCombo();
+  if(gained > maxPerClick) maxPerClick = gained;
+  updateScore(); updateStats();
+}
   function triggerClickEffect(){
     clock.classList.remove("click-effect-red","click-effect-blue","click-effect-glitch","click-effect-blackhole","click-effect-ripple");
     void clock.offsetWidth;
