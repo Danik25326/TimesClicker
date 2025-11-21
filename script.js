@@ -302,7 +302,6 @@ function addTime(){
       addTime();
     }
   });
-  clock.addEventListener("click", addTime);
 
   function showFloating(text){
     const el = document.createElement("div");
