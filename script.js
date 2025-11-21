@@ -52,7 +52,6 @@ window.onload = function () {
   // Реверб
   let isReverbActive = false;
   let reverbHoldTimeout = null;
-  let reverbChaosInterval = null;
 
   // Скіни
   let currentShape = "round";
@@ -214,10 +213,10 @@ window.onload = function () {
     const root = document.getElementById(containerId);
     list.forEach((s,i)=>{
       const el = document.createElement("div");
-      el.className="skin";
+      el.className = "skin";
       el.textContent = s.name;
-      el.onclick = ()=>{
-        root.querySelectorAll(".skin").forEach(e=>e.classList.remove("active"));
+      el.onclick = () => {
+        root.querySelectorAll(".skin").forEach(e => e.classList.remove("active"));
         el.classList.add("active");
         callback(s.id);
       };
@@ -265,7 +264,7 @@ window.onload = function () {
     }, 600);
   }
 
-  // === ТОАСТ 10 секунд ===
+  // === ТОАСТ — 10 секунд ===
   function showToast(text){
     const t = document.createElement("div");
     t.className = "toast";
@@ -391,7 +390,7 @@ window.onload = function () {
   setInterval(updateClockHands, 1000);
   updateClockHands();
 
-  // === РЕВЕРБ — тримай 30 секунд ===
+  // === КОСМІЧНИЙ РЕВЕРБ (10 секунд) ===
   reverbBtn.addEventListener("click", () => {
     if (!confirm("Ти впевнений, що хочеш повернути час назад?")) return;
     reverbOverlay.classList.remove("hidden");
@@ -405,40 +404,41 @@ window.onload = function () {
   reverbClock.addEventListener("mousedown", () => {
     if (!isReverbActive) return;
     reverbHint.style.display = "none";
-
-    reverbChaosInterval = setInterval(() => {
+    reverbClock.classList.add("reverb-mode");
+    document.querySelectorAll("#reverbClock .hand").forEach((hand, i) => {
+      const speed = [1, 12, 60][i];
       const rand = Math.random() * 360;
-      reverbClock.querySelector(".hour").style.transform = `translateX(-50%) rotate(${rand}deg)`;
-      reverbClock.querySelector(".minute").style.transform = `translateX(-50%) rotate(${rand*12}deg)`;
-      reverbClock.querySelector(".second").style.transform = `translateX(-50%) rotate(${rand*60}deg)`;
-    }, 50);
+      hand.style.setProperty('--rand', rand + 'deg');
+      hand.classList.add("reverb-chaos");
+    });
 
     reverbHoldTimeout = setTimeout(() => {
-      clearInterval(reverbChaosInterval);
       completeReverb();
-    }, 30000);
+    }, 10000); // 10 секунд
   });
 
-  reverbClock.addEventListener("mouseup", () => {
-    clearInterval(reverbChaosInterval);
+  const stopReverbHold = () => {
     clearTimeout(reverbHoldTimeout);
-  });
+    reverbClock.classList.remove("reverb-mode");
+    document.querySelectorAll("#reverbClock .hand").forEach(hand => hand.classList.remove("reverb-chaos"));
+  };
 
-  reverbClock.addEventListener("mouseleave", () => {
-    clearInterval(reverbChaosInterval);
-    clearTimeout(reverbHoldTimeout);
-  });
+  reverbClock.addEventListener("mouseup", stopReverbHold);
+  reverbClock.addEventListener("mouseleave", stopReverbHold);
 
   function completeReverb(){
+    stopReverbHold();
     prestigeMultiplier *= 1.2;
     score = 0; clickPower = 1; autoRate = 0; totalUpgradesBought = 0; maxPerClick = 1;
     upgrades.forEach((u, i) => { u.level = 0; buttons[i]?.classList.add("hidden"); u.update(); });
     buttons[0].classList.remove("hidden");
     updateScore(); updateStats(); updateAchievements();
-    alert(`Реверб завершено! Множник: ${prestigeMultiplier.toFixed(2)}×`);
-    reverbOverlay.classList.add("hidden");
-    timeTunnel.classList.remove("active");
-    isReverbActive = false;
+    setTimeout(() => {
+      alert(`Реверб завершено! Множник: ${prestigeMultiplier.toFixed(2)}×`);
+      reverbOverlay.classList.add("hidden");
+      timeTunnel.classList.remove("active");
+      isReverbActive = false;
+    }, 800);
   }
 
   // === ТАБИ ===
