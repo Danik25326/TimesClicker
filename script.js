@@ -4,9 +4,6 @@ window.onload = function () {
   const clockWrapper = document.getElementById("clockWrapper");
   const comboBubble = document.getElementById("comboBubble");
   const comboCount = document.getElementById("comboCount");
-  const hourHand = document.querySelector(".hour");
-  const minuteHand = document.querySelector(".minute");
-  const secondHand = document.querySelector(".second");
   const musicBtn = document.getElementById("musicBtn");
   const prevTrack = document.getElementById("prevTrack");
   const nextTrack = document.getElementById("nextTrack");
@@ -28,6 +25,7 @@ window.onload = function () {
   const reverbOverlay = document.getElementById("reverbOverlay");
   const reverbClock = document.getElementById("reverbClock");
   const reverbHint = document.getElementById("reverbHint");
+
   // === State ===
   let score = 0;
   let clickPower = 1;
@@ -54,6 +52,7 @@ window.onload = function () {
   let currentClockSkin = "neon-blue";
   let currentHandSkin = "darkblue";
   let currentEffect = "red";
+
   // === МУЗИКА ===
   const trackNames = ["Фонк №1","Фонк №2","Фонк №3","Фонк №4","Фонк №5","Фонк №6","Фонк №7"];
   const tracks = [
@@ -85,6 +84,7 @@ window.onload = function () {
   });
   prevTrack.onclick = () => { currentTrack = (currentTrack - 1 + tracks.length) % tracks.length; loadTrack(currentTrack); };
   nextTrack.onclick = () => { currentTrack = (currentTrack + 1) % tracks.length; loadTrack(currentTrack); };
+
   // === ФОРМАТУВАННЯ ЧАСУ ===
   function formatTime(seconds){
     seconds = Math.floor(seconds);
@@ -109,6 +109,7 @@ window.onload = function () {
     }
     return parts.length ? parts.join(" ") : `${seconds} сек`;
   }
+
   // === АПГРЕЙДИ ===
   const upgrades = [
     { name:"Кліпати очима", baseCost:1, type:"click", bonus:1, level:0 },
@@ -168,6 +169,7 @@ window.onload = function () {
   function updateAllButtons(){
     upgrades.forEach(up => up.update());
   }
+
   // === СКІНИ ===
   const shapes = [{id:"round", name:"Круг"},{id:"square", name:"Квадрат"},{id:"diamond", name:"Ромб"},{id:"oval", name:"Овал"}];
   const clockSkins = [
@@ -189,6 +191,7 @@ window.onload = function () {
     {id:"blackhole", name:"Чорна діра"},
     {id:"ripple", name:"Хвиля часу"},
   ];
+
   function createSkinGrid(containerId, list, callback){
     const root = document.getElementById(containerId);
     list.forEach((s,i)=>{
@@ -204,6 +207,7 @@ window.onload = function () {
       root.appendChild(el);
     });
   }
+
   function applyAllSkins(){
     // Форма годинника — на обидва
     document.querySelectorAll(".clock").forEach(c => {
@@ -214,10 +218,10 @@ window.onload = function () {
     const clockSkin = clockSkins.find(s => s.id === currentClockSkin);
     if (clockSkin && clockSkin.apply) clockSkin.apply();
 
-    // Стрілки — просто викликаємо оригінальний apply(), він і так міняє всі .hand
+    // Стрілки — просто викликаємо оригінальний apply(), він сам міняє всі .hand (і в ревербі теж!)
     const handSkin = handSkins.find(s => s.id === currentHandSkin);
     if (handSkin && handSkin.apply) {
-      handSkin.apply();   // ← ось і все! Твій оригінальний apply() вже ідеальний
+      handSkin.apply();
     }
   }
 
@@ -225,9 +229,8 @@ window.onload = function () {
   createSkinGrid("clockSkins", clockSkins, (id)=>{currentClockSkin=id; applyAllSkins();});
   createSkinGrid("handSkins", handSkins, (id)=>{currentHandSkin=id; applyAllSkins();});
   createSkinGrid("effectSkins", effects, (id)=>{currentEffect=id;});
-
-  // Важливо: викликаємо при старті і після кожного кліку
   applyAllSkins();
+
   // === КОМБО ===
   function handleClickCombo(){
     const now = Date.now();
@@ -252,6 +255,7 @@ window.onload = function () {
       currentCombo = 0;
     }, 600);
   }
+
   // === ТОАСТ 10 секунд ===
   function showToast(text){
     const t = document.createElement("div");
@@ -262,6 +266,7 @@ window.onload = function () {
     toastContainer.appendChild(t);
     setTimeout(() => t.remove(), 10000);
   }
+
   // === КЛІК ===
   function addTime(){
     const gained = Math.round(clickPower * prestigeMultiplier);
@@ -301,6 +306,7 @@ window.onload = function () {
     });
     setTimeout(() => el.remove(), 920);
   }
+
   // === СТАТИСТИКА ===
   function updateScore(){
     scoreText.textContent = `Часу витрачено: ${formatTime(score)}`;
@@ -314,6 +320,7 @@ window.onload = function () {
     maxPerClickEl.textContent = `${formatTime(maxPerClick)}`;
     prestigeMultEl.textContent = `${prestigeMultiplier.toFixed(2)}×`;
   }
+
   // === ДОСЯГНЕННЯ ===
   const achRoot = document.getElementById("achievements");
   const achievementsList = [
@@ -347,6 +354,7 @@ window.onload = function () {
       }
     });
   }
+
   // === АВТО ТІК ===
   setInterval(() => {
     const gained = Math.round(autoRate * prestigeMultiplier);
@@ -358,18 +366,20 @@ window.onload = function () {
     updateStats();
     updateAchievements();
   }, 1000);
+
   // === РЕАЛЬНИЙ ГОДИННИК ===
   function updateClockHands(){
     const now = new Date();
     const s = now.getSeconds();
     const m = now.getMinutes();
     const h = now.getHours() % 12;
-    secondHand.style.transform = `translateX(-50%) rotate(${s*6}deg)`;
-    minuteHand.style.transform = `translateX(-50%) rotate(${m*6 + s*0.1}deg)`;
-    hourHand.style.transform = `translateX(-50%) rotate(${h*30 + m*0.5}deg)`;
+    document.querySelectorAll(".second").forEach(h => h.style.transform = `translateX(-50%) rotate(${s*6}deg)`);
+    document.querySelectorAll(".minute").forEach(h => h.style.transform = `translateX(-50%) rotate(${m*6 + s*0.1}deg)`);
+    document.querySelectorAll(".hour").forEach(h => h.style.transform = `translateX(-50%) rotate(${h*30 + m*0.5}deg)`);
   }
   setInterval(updateClockHands, 1000);
   updateClockHands();
+
   // === РЕВЕРБ (10 секунд) ===
   reverbBtn.addEventListener("click", () => {
     if (!confirm("Ти впевнений, що хочеш повернути час назад?")) return;
@@ -410,6 +420,7 @@ window.onload = function () {
       isReverbActive = false;
     }, 800);
   }
+
   // === ТАБИ ===
   document.querySelectorAll(".top-tabs .tab").forEach(btn => {
     btn.addEventListener("click", () => {
@@ -419,6 +430,7 @@ window.onload = function () {
       document.getElementById(btn.dataset.tab).classList.add("active");
     });
   });
+
   // === ЗАГОЛОВОК ===
   if(worldTitle){
     worldTitle.addEventListener("keydown", e => { if(e.key==="Enter") e.preventDefault(); });
@@ -428,6 +440,7 @@ window.onload = function () {
       else if(!/\sTime$/i.test(t)) worldTitle.textContent = `${t} Time`;
     });
   }
+
   // === СТАРТ ===
   updateScore(); updateStats(); updateAchievements();
 };
