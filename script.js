@@ -369,13 +369,16 @@ window.onload = function () {
   setInterval(updateClockHands, 1000);
   updateClockHands();
 
-  // === КРУТИЙ РЕВЕРБ ===
+  // === ОСТАТОЧНИЙ КОСМІЧНИЙ РЕВЕРБ ===
+  let reverbTime = 0;  // лічильник секунд утримання
+
   reverbBtn.addEventListener("click", () => {
     if (!confirm("Ти впевнений, що хочеш повернути час назад?")) return;
     reverbOverlay.classList.remove("hidden");
     timeTunnel.classList.add("active");
     reverbHint.style.opacity = "1";
     isReverbActive = true;
+    reverbTime = 0;
     setTimeout(() => reverbHint.style.opacity = "0", 3000);
   });
 
@@ -385,15 +388,27 @@ window.onload = function () {
     reverbClock.classList.add("reverb-mode");
     timeTunnel.classList.add("intense");
 
-    document.querySelectorAll("#reverbClock .hand").forEach(hand => {
-      const duration = 0.8 + Math.random() * 1.2;
-      const direction = Math.random() > 0.5 ? 1 : -1;
-      const turns = 15 + Math.random() * 25;
-      const rotation = direction * turns * 360;
+    // Прискорення кожну секунду
+    const accelInterval = setInterval(() => {
+      reverbTime++;
+      if (reverbTime >= 10) clearInterval(accelInterval);
 
-      hand.style.animation = `chaosSpin ${duration}s linear infinite`;
-      hand.style.setProperty('--rand', `${rotation}deg`);
-    });
+      document.querySelectorAll("#reverbClock .hand").forEach(hand => {
+        const baseSpeed = 360 * (reverbTime * 2 + 5);  // від повільного до шаленого
+        const direction = Math.random() > 0.5 ? 1 : -1;
+        const rotation = direction * baseSpeed * 10;
+
+        hand.style.animationDuration = `${Math.max(0.3, 3 - reverbTime * 0.25)}s`;  // швидшає
+        hand.style.setProperty('--rand', `${rotation}deg`);
+      });
+
+      // Прискорюємо фон
+      document.querySelector(".reverb-overlay::before").style.animationDuration = `${Math.max(1, 12 - reverbTime)}s`;
+
+      // Зміна кольору обідка
+      const colors = ["#0ea5e9", "#8b5cf6", "#ec4899", "#ff006e", "#ff3b5c"];
+      reverbClock.style.borderColor = colors[reverbTime % colors.length];
+    }, 1000);
 
     reverbHoldTimeout = setTimeout(completeReverb, 10000);
   };
@@ -403,6 +418,7 @@ window.onload = function () {
     reverbClock.classList.remove("reverb-mode");
     timeTunnel.classList.remove("intense");
     document.querySelectorAll("#reverbClock .hand").forEach(hand => hand.style.animation = "");
+    reverbClock.style.borderColor = "#ff00ff";
   };
 
   reverbClock.addEventListener("mousedown", startReverbHold);
@@ -424,11 +440,10 @@ window.onload = function () {
       reverbOverlay.classList.add("hidden");
       timeTunnel.classList.remove("active", "intense", "reverb-complete");
       isReverbActive = false;
-    }, 1300);
+    }, 1500);
 
     updateScore(); updateStats(); updateAchievements();
   }
-
   // === ТАБИ ===
   document.querySelectorAll(".top-tabs .tab").forEach(btn => {
     btn.addEventListener("click", () => {
