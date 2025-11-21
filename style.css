@@ -69,16 +69,14 @@ body{
   display:flex;
   gap:32px;
   width:min(1350px,95vw);
-  margin-top:160px; 
-  position:relative;
-  z-index:1; 
+  margin-top:130px; 
 }
 /* Ліва панель */
 .left-panel{
   width:500px;
   background:var(--glass);
   border-radius:16px;
-  padding:30px;
+  padding:20px;
   box-shadow:0 10px 40px rgba(0,0,0,0.7);
   backdrop-filter:blur(10px);
 }
